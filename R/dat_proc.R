@@ -116,3 +116,56 @@ for(i in 1:nrow(tosv)){
   save(list = flnm, file = paste0('data/', flnm, '.RData'), compress = 'xz')
   
 }
+
+# get model estimates for synthesis indicators ----------------------------
+
+
+avgests <- list.files('data', pattern = '^mods', full.names = T) %>% 
+  tibble(
+    fl = .,
+    station = gsub('\\D+', '', .),
+    param = gsub('^data/mods_|[0-9]*|\\.RData$', '', .), 
+    doystr = case_when(
+      param == 'chl' ~ 32, 
+      param == 'gpp' ~ 32,
+      param == 'do' ~ 182,
+      param == 'dosat' ~ 182
+      ),
+    doyend = case_when(
+      param == 'chl' ~ 121, 
+      param == 'gpp' ~ 152,
+      param == 'do' ~ 305,
+      param == 'dosat' ~ 305
+    )
+  ) %>% 
+  group_by(fl) %>% 
+  nest() %>% 
+  mutate(
+    mod = purrr::map(fl, function(x){
+      
+      load(file = x)
+      
+      nm <- basename(x)
+      nm <- gsub('\\.RData', '', nm)
+      
+      out <- get(nm) %>% 
+        pull(modi) %>% 
+        deframe()
+      
+      return(out)
+      
+    })
+  ) %>% 
+  unnest(c('data')) %>% 
+  group_by(doystr, doyend, mod, fl) %>% 
+  nest() %>% 
+  mutate(
+    avgseas = purrr::pmap(list(mod = mod, doystr = doystr, doyend = doyend), anlz_avgseason)
+  ) %>% 
+  unnest('data') %>% 
+  ungroup() %>% 
+  select(-mod) %>% 
+  unnest('avgseas') %>% 
+  select(station, param, doystr, doyend, yr, upr = bt_upr, lwr = bt_lwr, avg = bt_avg)
+
+write.csv(avgests, 'results/avgests.csv', row.names = F)
