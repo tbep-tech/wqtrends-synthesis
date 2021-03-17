@@ -5,11 +5,14 @@ library(wqtrends)
 
 # format raw wq data for use with wqtrends --------------------------------
 
-dat <- read.csv('raw/sfb_surf_CB_SB_LSB.csv', stringsAsFactors = F)
+# all raw files from DS
+chlraw <- read.csv('raw/sfb_surf_CB_SB_LSB.csv', stringsAsFactors = F)
+gppraw <- read.csv('raw/sfb_GPP_monthly.csv', stringsAsFactors = F) 
+doraw <- read.csv('raw/CB_SB_LSB_depthavg_O2.csv', stringsAsFactors = F)
 
-# add date columns, convert parameter names, filter by years, remove d_chl, old do ests (calculated below)
-datprc <- dat %>% 
-  select(date, station, chl = chl_merge, docalc = do_merge) %>% 
+# get chlorophyll 
+chldat <- chlraw %>% 
+  select(date, station, chl = chl_merge) %>% 
   gather('param', 'value', -date, -station) %>% 
   mutate(
     date = ymd(date),
@@ -17,15 +20,13 @@ datprc <- dat %>%
     cont_year = decimal_date(date),
     yr = year(date),
     mo = month(date, label = T),
-    param = tolower(param),
-    param = gsub('^c_chl$', 'chl', param), 
-    param = gsub('^s$', 'sal', param)
+    param = tolower(param)
   ) %>% 
   filter(yr >= 1990 & yr <= 2019) %>% 
   filter(!is.na(value))
 
-# get gpp estimates
-gppdat <- read.csv('raw/sfb_GPP_monthly.csv', stringsAsFactors = F) %>% 
+# get gpp
+gppdat <- gppraw %>% 
  select(cont_year = dec_date, station, GPP) %>% 
  mutate(
    date = date_decimal(cont_year),
@@ -42,9 +43,23 @@ gppdat <- read.csv('raw/sfb_GPP_monthly.csv', stringsAsFactors = F) %>%
  filter(yr >= 1990 & yr <= 2019) %>% 
  filter(!is.na(value))
 
+# get depht-averaged do
+dodat <- doraw %>% 
+  select(date, station, do, dosat = do_sat) %>% 
+  gather('param', 'value', -date, -station) %>% 
+  mutate(
+    date = ymd(date),
+    doy = yday(date), 
+    cont_year = decimal_date(date),
+    yr = year(date),
+    mo = month(date, label = T),
+    param = tolower(param)
+  ) %>% 
+  filter(yr >= 1990 & yr <= 2019) %>% 
+  filter(!is.na(value))
+
 # combine new do ests, gpp with datprc
-datprc <- datprc %>% 
- bind_rows(gppdat) %>% 
+datprc <- bind_rows(chldat, gppdat, dodat) %>% 
  arrange(station, param, date)
 
 save(datprc, file = 'data/datprc.RData', compress = 'xz')
@@ -56,7 +71,7 @@ data(datprc)
 # data to model, same as datprc, params in wide format, nested by station
 # crossed with frms
 tomod <- datprc %>% 
-  filter(param %in% c('chl', 'docalc', 'gpp')) %>% # add parameters here
+  filter(param %in% c('chl', 'do', 'dosat', 'gpp')) %>% # add parameters here
   group_by(station, param) %>% 
   nest %>% 
   mutate(
