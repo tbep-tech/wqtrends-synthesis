@@ -6,9 +6,9 @@ library(wqtrends)
 # format raw wq data for use with wqtrends --------------------------------
 
 # all raw files from DS
-chlraw <- read.csv('raw/sfb_surf_CB_SB_LSB.csv', stringsAsFactors = F)
-gppraw <- read.csv('raw/sfb_GPP_monthly.csv', stringsAsFactors = F) 
-doraw <- read.csv('raw/CB_SB_LSB_depthavg_O2.csv', stringsAsFactors = F)
+chlraw <- read.csv('data/raw/sfb_surf_CB_SB_LSB.csv', stringsAsFactors = F)
+gppraw <- read.csv('data/raw/sfb_GPP_monthly.csv', stringsAsFactors = F) 
+doraw <- read.csv('data/raw/CB_SB_LSB_depthavg_O2.csv', stringsAsFactors = F)
 
 # get chlorophyll 
 chldat <- chlraw %>% 
