@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(sf)
 library(wqtrends)
+library(googlesheets4)
 
 # format raw wq data for use with wqtrends --------------------------------
 
@@ -119,25 +120,27 @@ for(i in 1:nrow(tosv)){
 
 # get model estimates for synthesis indicators ----------------------------
 
+# # file with lookup combos
+# # https://docs.google.com/spreadsheets/d/13qYK33QKpfm6_jVKXB8J_T3Q8K8ut8lZUM1CTzXqQ5o/edit#gid=0
+# sht <- read_sheet('13qYK33QKpfm6_jVKXB8J_T3Q8K8ut8lZUM1CTzXqQ5o') %>% 
+#   select(var, metfun, doystr, doyend)
 
-avgests <- list.files('data', pattern = '^mods', full.names = T) %>% 
+# metric lookup table
+mets <- tibble(
+    param = c("chl", "gpp", "dosat", "do", "gpp", "chl", "chl", "chl", "gpp", "gpp"), 
+    metfun = c("mean", "mean", "mean", "mean", "max", "max", "var", "var", "var", "var"), 
+    doystr = c(32, 32, 182, 182, 32, 32, 32, 152, 32, 152), 
+    doyend = c(121, 152, 305, 305, 152, 152, 152, 274, 152, 274)
+  )
+
+# estimates, takes about four hours to run
+metests <- list.files('data', pattern = '^mods', full.names = T) %>% 
   tibble(
     fl = .,
     station = gsub('\\D+', '', .),
-    param = gsub('^data/mods_|[0-9]*|\\.RData$', '', .), 
-    doystr = case_when(
-      param == 'chl' ~ 32, 
-      param == 'gpp' ~ 32,
-      param == 'do' ~ 182,
-      param == 'dosat' ~ 182
-      ),
-    doyend = case_when(
-      param == 'chl' ~ 121, 
-      param == 'gpp' ~ 152,
-      param == 'do' ~ 305,
-      param == 'dosat' ~ 305
-    )
+    param = gsub('^data/mods_|[0-9]*|\\.RData$', '', .)
   ) %>% 
+  left_join(mets, by = 'param') %>% 
   group_by(fl) %>% 
   nest() %>% 
   mutate(
@@ -157,15 +160,24 @@ avgests <- list.files('data', pattern = '^mods', full.names = T) %>%
     })
   ) %>% 
   unnest(c('data')) %>% 
-  group_by(doystr, doyend, mod, fl) %>% 
+  group_by(metfun, doystr, doyend, mod, fl) %>% 
   nest() %>% 
   mutate(
-    avgseas = purrr::pmap(list(mod = mod, doystr = doystr, doyend = doyend), anlz_avgseason)
+    metseas = purrr::pmap(list(fl, metfun = metfun, mod = mod, doystr = doystr, doyend = doyend), function(fl, metfun, mod, doystr, doyend){
+      
+      cat(fl, metfun, '\n')
+      
+      toprs <- paste0('anlz_metseason(mod, ', metfun, ', ', doystr, ', ', doyend, ', nsim = 1e5, na.rm = TRUE)')
+      out <- eval(parse(text = toprs))
+    
+      return(out)
+      
+    })
   ) %>% 
   unnest('data') %>% 
   ungroup() %>% 
   select(-mod) %>% 
-  unnest('avgseas') %>% 
-  select(station, param, doystr, doyend, yr, upr = bt_upr, lwr = bt_lwr, avg = bt_avg)
+  unnest('metseas') %>% 
+  select(station, param, metfun, doystr, doyend, yr, upr = bt_upr, lwr = bt_lwr, met = bt_met)
 
-write.csv(avgests, 'results/avgests.csv', row.names = F)
+write.csv(metests, 'results/metests.csv', row.names = F)
