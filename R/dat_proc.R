@@ -127,10 +127,10 @@ for(i in 1:nrow(tosv)){
 
 # metric lookup table
 mets <- tibble(
-    param = c("chl", "gpp", "dosat", "do", "gpp", "chl", "chl", "chl", "gpp", "gpp"), 
-    metfun = c("mean", "mean", "mean", "mean", "max", "max", "var", "var", "var", "var"), 
-    doystr = c(32, 32, 182, 182, 32, 32, 32, 152, 32, 152), 
-    doyend = c(121, 152, 305, 305, 152, 152, 152, 274, 152, 274)
+    param = c("chl", "chl", "gpp", "gpp", "dosat", "do", "gpp", "chl", "chl", "chl", "gpp", "gpp"), 
+    metfun = c("mean", "mean", "mean", "mean", "mean", "mean", "max", "max", "var", "var", "var", "var"), 
+    doystr = c(32, 213, 32, 213, 182, 182, 32, 32, 32, 152, 32, 152), 
+    doyend = c(121, 364, 152, 364, 305, 305, 152, 152, 152, 274, 152, 274)
   )
 
 # estimates, takes about four hours to run
