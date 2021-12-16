@@ -2,6 +2,8 @@ library(tidyverse)
 library(lubridate)
 library(sf)
 library(wqtrends)
+library(mgcv)
+library(here)
 
 # station lat/lon as separate file ----------------------------------------
 
@@ -173,3 +175,186 @@ for(i in 1:nrow(tosv)){
   save(list = flnm, file = paste0('data/', flnm, '.RData'), compress = 'xz')
   
 }
+
+# model summary table -----------------------------------------------------
+
+data(datprc)
+
+# lookup tables
+out <- datprc %>% 
+  select(station, param) %>% 
+  unique %>% 
+  mutate(
+    AIC = NA, 
+    GCV = NA, 
+    R2 = NA, 
+    yr = NA
+  )
+
+for(i in 1:nrow(tomod)){
+  
+  cat(i, 'of', nrow(tomod), '\n')
+  
+  station <- tomod$station[[i]]
+  parameter <- tomod$param[[i]]
+  
+  fl <- paste0('mods_', parameter, station)
+  load(file = paste0('data/', fl, '.RData'))
+  
+  res <- get(fl) %>% 
+    ungroup()
+  
+  mod <- res %>%
+    pull(modi) %>% 
+    deframe()
+  
+  yr <- res %>% 
+    pull(data) %>% 
+    .[[1]] %>% 
+    pull(yr) %>% 
+    min
+  
+  fit <- anlz_fit(mod)
+  
+  out[i, c('AIC', 'GCV', 'R2', 'yr')] <- data.frame(fit, yr = yr)
+  
+}
+
+fittab <- out 
+
+save(fittab, file = here('data/fittab.RData'))
+
+# create fit plots --------------------------------------------------------
+
+data(datprc)
+
+# lookup tables
+toproc <- datprc %>% 
+  select(station, param) %>% 
+  unique
+
+parms <- c('chl', 'do', 'dosat', 'gpp', 'kd')
+labs <- c('Chl-a (ug/L)', 'DO (mg/L)', 'DO (% sat.)', 'GPP (mg C m-2 d-1)', 'Kd (m-1)')
+names(labs) <- parms
+
+for(i in 1:nrow(toproc)){
+  
+  cat(i, 'of', nrow(toproc), '\n')
+  
+  ##
+  # get model
+  
+  station <- toproc$station[[i]]
+  parameter <- toproc$param[[i]]
+  
+  fl <- paste0('mods_', parameter, station)
+  load(file = paste0('data/', fl, '.RData'))
+  
+  mod <- get(fl) %>% 
+    ungroup() %>%
+    pull(modi) %>% 
+    deframe()
+  
+  ##
+  # plot label stuff
+  
+  lab <- labs[names(labs) %in% parameter]
+  r2 <- anlz_fit(mod) %>% 
+    pull(R2) %>% 
+    round(2)
+  ttl <- paste0('Station: ', station, ', ', lab, ', R2 = ', r2)
+  flnm <- paste0('figs/fits_', parameter, station, '.png')
+  
+  ##
+  # save plot
+  
+  png(here(flnm), height = 8, width = 8, res = 200, units = 'in')
+  par(mfrow = c(2, 2))
+  gam.check(mod)
+  mtext(ttl, side = 3, line = -1, outer = TRUE)
+  dev.off()
+  
+}
+
+# trend figure summaries --------------------------------------------------
+
+data(datprc)
+
+# lookup tables
+toproc <- datprc %>% 
+  select(station, param) %>% 
+  unique
+
+wins <- 5:15
+txtsz <- 3
+parms <- c('chl', 'do', 'dosat', 'gpp', 'kd')
+labs <- c('Chl-a (ug/L)', 'DO (mg/L)', 'DO (% sat.)', 'GPP (mg C m-2 d-1)', 'Kd (m-1)')
+names(labs) <- parms
+
+for(i in 1:nrow(toproc)){
+  
+  cat(i, 'of', nrow(toproc), '\n')
+  
+  ##
+  # get model
+  
+  station <- toproc$station[[i]]
+  parameter <- toproc$param[[i]]
+  
+  fl <- paste0('mods_', parameter, station)
+  load(file = paste0('data/', fl, '.RData'))
+  
+  mod <- get(fl) %>% 
+    ungroup() %>%
+    pull(modi) %>% 
+    deframe()
+  
+  ##
+  # plot label stuff
+  
+  lab <- labs[names(labs) %in% parameter]
+  r2 <- anlz_fit(mod) %>% 
+    pull(R2) %>% 
+    round(2)
+  ttl <- paste0('Station: ', station, ', ', lab, ', R2 = ', r2)
+  flnm <- paste0('figs/trnds_', parameter, station, '.png')
+  
+  ##
+  # plots
+  
+  p1 <- show_prdseries(mod, ylab = lab) + ggtitle(ttl) #+ scale_x_date(expand = c(0, 0))
+  p2 <- show_sumtrndseason(mod, doystr = 1, doyend = 60, win = wins, txtsz = txtsz) +
+    labs(
+      title = NULL, 
+      subtitle = 'Jan 1 - Mar 1', 
+      caption = NULL
+    )
+  p3 <- show_sumtrndseason(mod, doystr = 60, doyend = 182, win = wins, txtsz = txtsz) +
+    labs(
+      title = NULL, 
+      subtitle = 'Mar 1 - Jul 1', 
+      caption = NULL
+    )
+  p4 <- show_sumtrndseason(mod, doystr = 182, doyend = 244, win = wins, txtsz = txtsz) +
+    labs(
+      title = NULL, 
+      subtitle = 'Jul 1 - Sep 1', 
+      caption = NULL
+    )
+  p5 <- show_sumtrndseason(mod, doystr = 244, doyend = 365, win = wins, txtsz = txtsz) +
+    labs(
+      title = NULL, 
+      subtitle = 'Sep 1 - Dec 31', 
+      caption = NULL
+    )
+  ptrn <- p2 + p3 + p4 + p5 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'bottom')
+  p <- p1 + (ptrn) + plot_layout(ncol = 1, heights = c(0.2, 1))
+  
+  png(here(flnm), height = 9, width = 8, res = 200, units = 'in')
+  print(p)
+  dev.off()
+  
+}
+
+
+

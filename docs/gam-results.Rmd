@@ -1,0 +1,122 @@
+---
+title: "South Bay Exploratory GAMs analysis"
+author: "M. W. Beck"
+output: html_document
+---
+
+```{r setup, warning = F, message = F, echo = F}
+library(wqtrends)
+library(reactable)
+library(tidyverse)
+library(htmlwidgets)
+library(htmltools)
+library(knitr)
+library(here)
+
+opts_chunk$set(warning = FALSE, message = FALSE, echo = F)
+
+load(file = here('data/fittab.RData'))
+```
+
+# {.tabset}
+
+## Tabular fit summary
+
+```{r}
+fittab %>% 
+  mutate(
+    param = case_when(
+      param == 'chl' ~ 'Chl-a (ug/L)', 
+      param == 'do' ~ 'DO (mg/L)',
+      param == 'dosat' ~ 'DO (% sat.)', 
+      param == 'gpp' ~ 'GPP (mg C m-2 d-1)', 
+      param == 'kd' ~ 'Kd (m-1)'
+    )
+  ) %>% 
+  reactable(
+    groupBy = 'param', 
+    columns = list(
+      param = colDef(name = 'Parameter'),
+      station = colDef(name = 'Station'),
+      AIC = colDef(format = colFormat(digits = 1)),
+      GCV = colDef(format = colFormat(digits = 2)),
+      R2 = colDef(format = colFormat(digits = 2)),
+      yr = colDef(name = 'Starting year')
+    )
+  ) %>%  
+  prependContent(h5(class = "title", "Summary of GAM fits by parameter and station"))
+```
+
+## Graphical fit summary{.tabset .tabset-pills}
+
+### Chl-a
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'fits\\_chl', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### DO (mg/L)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'fits\\_do[0-9]', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### DO (% sat)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'fits\\_dosat', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### GPP (mg C m-2 d-1)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'fits\\_gpp', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### Kd (m-1)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'fits\\_kd', full.names = T)
+knitr::include_graphics(fls)
+```
+
+## Trend summary {.tabset .tabset-pills}
+
+### Chl-a
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'trnds\\_chl', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### DO (mg/L)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'trnds\\_do[0-9]', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### DO (% sat)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'trnds\\_dosat', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### GPP (mg C m-2 d-1)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'trnds\\_gpp', full.names = T)
+knitr::include_graphics(fls)
+```
+
+### Kd (m-1)
+
+```{r, out.width = '90%'}
+fls <- list.files(here('figs'), pattern = 'trnds\\_kd', full.names = T)
+knitr::include_graphics(fls)
+```
