@@ -1,6 +1,7 @@
 ---
 title: "South Bay Exploratory GAMs analysis"
 author: "M. W. Beck"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
 ---
 
@@ -19,6 +20,8 @@ load(file = here('data/fittab.RData'))
 ```
 
 # {.tabset}
+
+This summary document provides a synthesis of model results for multiple parameters and stations in South Bay.  The goal is provide a single location to quickly assess model fit and overall trends.  All results were obtained using the [wqtrends](https://tbep-tech.github.io/wqtrends/) R package.  Source code for this file is available [here](https://github.com/tbep-tech/wqtrends-synthesis), including access to all image files [here](https://github.com/tbep-tech/wqtrends-synthesis/tree/main/figs).
 
 ## Tabular fit summary
 
