@@ -49,6 +49,8 @@ fittab %>%
 
 ## Graphical fit summary{.tabset .tabset-pills}
 
+Plots show standard graphical output from by `gam.check()` from the [mgcv](https://cran.r-project.org/web/packages/mgcv/index.html) package, providing an assessment of model residuals.  Note the R2 values at the top of each set of plots, taken from the table on the previous tab. 
+
 ### Chl-a
 
 ```{r, out.width = '90%'}
@@ -85,6 +87,8 @@ knitr::include_graphics(fls)
 ```
 
 ## Trend summary {.tabset .tabset-pills}
+
+Results for each station evaluate windows from 5 - 15 years with seasonal summaries in quarters.  Trends are assessed for average estimated values of each indicator within the seasonal range shown at the top of each plot.  * p < 0.05, ** p < 0.005 
 
 ### Chl-a
 
