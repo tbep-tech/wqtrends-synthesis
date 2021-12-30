@@ -323,33 +323,10 @@ for(i in 1:nrow(toproc)){
   ##
   # plots
   
-  p1 <- show_prdseries(mod, ylab = lab) + ggtitle(ttl) #+ scale_x_date(expand = c(0, 0))
-  p2 <- show_sumtrndseason(mod, doystr = 1, doyend = 60, win = wins, txtsz = txtsz) +
-    labs(
-      title = NULL, 
-      subtitle = 'Jan 1 - Mar 1', 
-      caption = NULL
-    )
-  p3 <- show_sumtrndseason(mod, doystr = 60, doyend = 182, win = wins, txtsz = txtsz) +
-    labs(
-      title = NULL, 
-      subtitle = 'Mar 1 - Jul 1', 
-      caption = NULL
-    )
-  p4 <- show_sumtrndseason(mod, doystr = 182, doyend = 244, win = wins, txtsz = txtsz) +
-    labs(
-      title = NULL, 
-      subtitle = 'Jul 1 - Sep 1', 
-      caption = NULL
-    )
-  p5 <- show_sumtrndseason(mod, doystr = 244, doyend = 365, win = wins, txtsz = txtsz) +
-    labs(
-      title = NULL, 
-      subtitle = 'Sep 1 - Dec 31', 
-      caption = NULL
-    )
-  ptrn <- p2 + p3 + p4 + p5 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'bottom')
-  p <- p1 + (ptrn) + plot_layout(ncol = 1, heights = c(0.2, 1))
+  p1 <- show_prdseries(mod, ylab = lab) + ggtitle(ttl)
+  p2 <- show_sumtrndseason2(mod, win = wins, txtsz = txtsz) 
+    
+  p <- p1 + p2 + plot_layout(ncol = 1, heights = c(0.2, 1))
   
   png(here(flnm), height = 9, width = 8, res = 200, units = 'in')
   print(p)
