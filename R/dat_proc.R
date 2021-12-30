@@ -9,17 +9,17 @@ library(here)
 
 data(datprc)
 
-locs <- read.csv('raw/usgs_stations.csv') %>%
+locs <- read.csv(here('data/raw/usgs_stations.csv')) %>%
   filter(Station %in% datprc$station)
 
-save(locs, file = 'data/locs.RData', compress = 'xz')
+save(locs, file = here('data/locs.RData'), compress = 'xz')
 
 # format raw wq data for use with wqtrends --------------------------------
 
 # all raw files from DS
-chlraw <- read.csv('data/raw/sfb_surf_CB_SB_LSB.csv', stringsAsFactors = F)
-gppraw <- read.csv('data/raw/sfb_GPP_monthly.csv', stringsAsFactors = F) 
-doraw <- read.csv('data/raw/CB_SB_LSB_depthavg_O2.csv', stringsAsFactors = F)
+chlraw <- read.csv(here('data/raw/sfb_surf_CB_SB_LSB.csv'), stringsAsFactors = F)
+gppraw <- read.csv(here('data/raw/sfb_GPP_monthly.csv'), stringsAsFactors = F) 
+doraw <- read.csv(here('data/raw/CB_SB_LSB_depthavg_O2.csv'), stringsAsFactors = F)
 
 # get chlorophyll as ug l-1
 chldat <- chlraw %>% 
@@ -121,7 +121,7 @@ datprc <- datprc %>%
 # rawdat <- datprc
 # save(rawdat, file = '../wqtrends/data/rawdat.RData', compress = 'xz')
 
-save(datprc, file = 'data/datprc.RData', compress = 'xz')
+save(datprc, file = here('data/datprc.RData'), compress = 'xz')
 
 # save separate rdata model files for each station, parameter -------------
 
@@ -172,7 +172,7 @@ for(i in 1:nrow(tosv)){
   
   assign(flnm, fl)
   
-  save(list = flnm, file = paste0('data/', flnm, '.RData'), compress = 'xz')
+  save(list = flnm, file = here(paste0('data/', flnm, '.RData')), compress = 'xz')
   
 }
 
@@ -199,7 +199,7 @@ for(i in 1:nrow(tomod)){
   parameter <- tomod$param[[i]]
   
   fl <- paste0('mods_', parameter, station)
-  load(file = paste0('data/', fl, '.RData'))
+  load(file = here(paste0('data/', fl, '.RData')))
   
   res <- get(fl) %>% 
     ungroup()
@@ -248,7 +248,7 @@ for(i in 1:nrow(toproc)){
   parameter <- toproc$param[[i]]
   
   fl <- paste0('mods_', parameter, station)
-  load(file = paste0('data/', fl, '.RData'))
+  load(file = here(paste0('data/', fl, '.RData')))
   
   mod <- get(fl) %>% 
     ungroup() %>%
@@ -302,7 +302,7 @@ for(i in 1:nrow(toproc)){
   parameter <- toproc$param[[i]]
   
   fl <- paste0('mods_', parameter, station)
-  load(file = paste0('data/', fl, '.RData'))
+  load(file = here(paste0('data/', fl, '.RData')))
   
   mod <- get(fl) %>% 
     ungroup() %>%
@@ -355,6 +355,3 @@ for(i in 1:nrow(toproc)){
   dev.off()
   
 }
-
-
-
