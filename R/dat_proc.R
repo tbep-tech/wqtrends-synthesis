@@ -3,6 +3,7 @@ library(lubridate)
 library(sf)
 library(wqtrends)
 library(mgcv)
+library(patchwork)
 library(here)
 
 # station lat/lon as separate file ----------------------------------------
