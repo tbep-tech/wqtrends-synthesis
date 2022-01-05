@@ -4,6 +4,7 @@ library(sf)
 library(wqtrends)
 library(mgcv)
 library(here)
+library(patchwork)
 
 # station lat/lon as separate file ----------------------------------------
 
