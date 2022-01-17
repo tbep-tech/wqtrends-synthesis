@@ -1,0 +1,256 @@
+---
+title: "Exploratory analysis of sampling design on trends in South Bay"
+author: "M. W. Beck"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+  
+```{r setup, warning = F, message = F, echo = T}
+library(tidyverse)
+library(wqtrends)
+library(patchwork)
+library(lubridate)
+library(here)
+library(knitr)
+
+opts_chunk$set(warning = FALSE, message = FALSE, echo = T)
+
+load(file = here('data/datprc.RData'))
+load(file = here('data/tiddat.RData'))
+
+# chl data station 30
+chldat <- datprc %>% 
+  filter(station == 30) %>% 
+  filter(param == 'chl')
+
+# subset tidal data by date range in chldat
+tiddat <- tiddat %>% 
+  filter(date >= min(chldat$date) & date <= max(chldat$date))
+
+# year groups
+delim <- 3
+delims <- unique(year(tiddat$date)) %>% 
+  as.numeric %>% 
+  range %>% 
+  {seq(.[1], .[2], length.out = delim + 1)} %>% 
+  round(0)
+
+# add temporal groupings to chldat 
+chldat <- chldat %>% 
+  mutate(
+    yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
+    qrt = quarter(date),
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('JFM', 'AMJ', 'JAS', 'OND')),
+    seas = case_when(
+      mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
+      mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
+      T ~ NA_character_
+    ), 
+    seas = factor(seas, levels = c('Feb 1 - Apr 30', 'Aug 1 - Oct 31'))
+  )
+```
+
+This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorphyll concentration as estimated from mixed-meta analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown above in the `chldat` data object.  Tidal data is obtained from hourly estimates of tidal velocity at Dumbarton Bridge, where the daily maximum velocity is used as measure of tidal mixing which closely follows the spring/neap tidal cycle.  
+
+Two questions addressed herein include: 
+  
+  1. How does variation in sample effort affect conclusions on trends, given that effort varied by month and season for the duration of the time seris?
+  1. How does timing of sampline with respect to tidal mixing affect conclusions on trends?
+  
+  ## Effect of sample effort 
+  
+  Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
+
+```{r, fig.height = 8, fig.width = 8}
+toplo <- chldat 
+
+p1 <- ggplot(toplo, aes(x = mo, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p2 <- ggplot(toplo, aes(x = qrt, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+```
+
+It is clearly shown that sampling in the spring occurred more frequency earlier in the period of record, whereas more sampling in the fall occurred later in th the period of record.  Regardless of time period, more sampling occurs in the spring.  
+
+To evaluate an effect on trend conclusions, the observed time series can be modeled with a GAM and seasonal conclusions can be evaluated for different time periods.  This can then be compared with different "down-sampled" versions of the original time series to test different scenarios.  The two tested scenarios include: 
+  
+1. Equal sampling across all months, time periods.
+1. Equal sampling within months, time periods
+
+The effect of both scenarios on the number of observations is shown below. 
+
+### Scenario 1: equal sampling across months, year groups
+
+The minimum number of samples in each month, year group combination is identified across all groups.  The down-sampled dataset takes a random sample for each month, year group combination that is equal in size to the minimum criteria.  A function is made to use later.
+
+```{r}
+downsamp_fun1 <- function(datin){
+  
+  tosmp <- datin %>% 
+    group_by(mo, yrgrp) %>% 
+    summarise(
+      cnt = n(), 
+      .groups = 'drop'
+    ) %>% 
+    group_by(mo) %>% 
+    filter(cnt == min(cnt)) %>% 
+    ungroup() %>% 
+    select(-yrgrp)
+  
+  minmo <- min(tosmp$cnt)
+  
+  out <- datin %>%
+    group_by(yrgrp, mo) %>% 
+    sample_n(size = minmo) %>% 
+    ungroup()
+  
+  return(out)  
+  
+}
+
+chlsmp1 <- downsamp_fun1(chldat)
+```
+
+Now, evaluating the counts in each temporal category as before shows that the down-sampled time series has a more equal distribution of samples by each seasonal period.  The counts are not exact because some months had missing data in each year (i.e., it is possible to have fewer than 12 samples in a year).
+
+```{r, fig.height = 8, fig.width = 8}
+toplo <- chlsmp1
+
+p1 <- ggplot(toplo, aes(x = mo, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p2 <- ggplot(toplo, aes(x = qrt, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+```
+
+### Scenario 2: equal sampling across year groups 
+
+This down-sampling scenario is similar as above, except the approximate sampling bias towards spring is more balanced between the year groups.  The minimum number of samples for each month across all year groups is used as the down-sampling criteria. 
+
+```{r}
+downsamp_fun2 <- function(datin){
+
+  tosmp <- datin %>% 
+    group_by(mo, yrgrp) %>% 
+    summarise(
+      cnt = n(), 
+      .groups = 'drop'
+    ) %>% 
+    group_by(mo) %>% 
+    filter(cnt == min(cnt)) %>% 
+    ungroup() %>% 
+    select(-yrgrp)
+  
+  out <- datin %>%
+    left_join(tosmp, by = 'mo') %>% 
+    group_by(yrgrp, mo) %>% 
+    sample_n(unique(cnt))  
+  
+  return(out)
+  
+}
+
+chlsmp2 <- downsamp_fun2(chldat)
+```
+
+```{r, fig.height = 8, fig.width = 8}
+toplo <- chlsmp2
+
+p1 <- ggplot(toplo, aes(x = mo, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p2 <- ggplot(toplo, aes(x = qrt, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
+  geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+  theme_minimal() + 
+  labs(
+    fill = 'Year group', 
+    x = NULL ,
+    y = 'Observations'
+  )
+
+p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+```
+
+### Trends on original and down-sampled
+
+Trends are now assessed for the original dataset and the two down-sampled datasets.  The models are created and plotted first.
+
+```{r, results = 'hide'}
+modorig <- anlz_gam(chldat, trans = 'log10')
+modsmp1 <- anlz_gam(chlsmp1, trans = 'log10')
+modsmp2 <- anlz_gam(chlsmp2, trans = 'log10')
+```
+
+Now plots: 
+
+```{r, fig.height = 3, fig.width = 8}
+show_prdseries(modorig, ylab = 'log-Chl-a') + labs(subtitle = '(a) Original data')
+show_prdseries(modsmp1, ylab = 'log-Chl-a') + labs(subtitle = '(b) Down-sampled, equal month')
+show_prdseries(modsmp2, ylab = 'log-Chl-a') + labs(subtitle = '(c) Down-sampled, equal year group')
+```
+
+### Trend (again) on original and down-sampled
+
+Because the random sample varies for each down-sampled subset, the analysis is repeated again. 

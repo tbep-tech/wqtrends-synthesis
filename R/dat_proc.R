@@ -5,6 +5,11 @@ library(wqtrends)
 library(mgcv)
 library(here)
 library(patchwork)
+library(googlesheets4)
+library(googledrive)
+
+gs4_deauth()
+drive_deauth()
 
 # station lat/lon as separate file ----------------------------------------
 
@@ -333,3 +338,22 @@ for(i in 1:nrow(toproc)){
   dev.off()
   
 }
+
+# dumbarton bridge tidal velocities ---------------------------------------
+
+# from here https://docs.google.com/spreadsheets/d/1sDr3DO3amgqc5oV0L23r6GruisEU-jMAsrWR7Zd9Ja8/edit#gid=935190080
+tidraw <- read_sheet(ss = '1sDr3DO3amgqc5oV0L23r6GruisEU-jMAsrWR7Zd9Ja8')
+
+# take daily max and square to get an indicator of tidal mixing (native units in m/s, converted is max(m/s)^2)
+# tz is UTC
+tiddat <- tidraw %>% 
+  mutate(
+    dt = with_tz(dt, tzone = 'Pacific/Pitcairn'),
+    date = as.Date(dt)
+  ) %>% 
+  group_by(date) %>% 
+  summarize(
+    tidmix = max(u_floodpos)^2
+  )
+
+save(tiddat, file = here('data/tiddat.RData'))
