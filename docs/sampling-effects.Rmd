@@ -4,7 +4,16 @@ author: "M. W. Beck"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
 ---
+
+This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorphyll concentration as estimated from mixed-meta analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown above in the `chldat` data object.  Tidal data is obtained from hourly estimates of tidal velocity at Dumbarton Bridge, where the daily maximum velocity is used as measure of tidal mixing which closely follows the spring/neap tidal cycle.  
+
+Two questions addressed herein include: 
   
+1. How does variation in sample effort affect conclusions on trends, given that effort varied by month and season for the duration of the time series?
+1. How does timing of sampling with respect to tidal mixing affect conclusions on trends?
+  
+First, some setup material for the analysis: 
+
 ```{r setup, warning = F, message = F, echo = T}
 library(tidyverse)
 library(wqtrends)
@@ -50,16 +59,15 @@ chldat <- chldat %>%
   )
 ```
 
-This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorphyll concentration as estimated from mixed-meta analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown above in the `chldat` data object.  Tidal data is obtained from hourly estimates of tidal velocity at Dumbarton Bridge, where the daily maximum velocity is used as measure of tidal mixing which closely follows the spring/neap tidal cycle.  
+This is the dataset that is evaluated: 
 
-Two questions addressed herein include: 
+```{r}
+head(chldat)
+```
+
+## Effect of sample effort 
   
-  1. How does variation in sample effort affect conclusions on trends, given that effort varied by month and season for the duration of the time seris?
-  1. How does timing of sampline with respect to tidal mixing affect conclusions on trends?
-  
-  ## Effect of sample effort 
-  
-  Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
+Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
 
 ```{r, fig.height = 8, fig.width = 8}
 toplo <- chldat 
