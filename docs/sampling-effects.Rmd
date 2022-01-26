@@ -383,3 +383,63 @@ cmptrnd_plo(cmptrnd)
 ```
 
 The results are similar as above, with one difference for the quarterly comparisons. The trend for 1992 - 2005, JFM period is significant for the first random subsample, but not the second.  So, the random draw does not appear to substantially influence our conclusions.
+
+### Evaluate effect on maximum peak estimates
+
+The above was repeated for the February to April period using five random down-sampled estimates and extracting the estimate of the maximum chlorophyll peak.  This tests the hypothesis that less frequent sampling earlier in the period of record may not capture high chlorophyll events and that should be reflected in lower GAM estimates in the down-sampled data. The down-sampling assumes equal month.
+
+```{r, results = 'hide'}
+# random sample label
+rnds <- paste('Equal month', 1:5)
+
+# get max seasonal estimates from random down-sampled data
+ests <- tibble(chlsmp = rnds) %>% 
+  group_by(chlsmp) %>% 
+  nest() %>% 
+  mutate(
+    data = list(chldat), 
+    data = purrr::map(data, downsamp_fun1), 
+    mods = purrr::map(data, anlz_gam, trans = 'log10'),
+    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T)
+  ) %>% 
+  select(chlsmp, vals) %>% 
+  unnest('vals')
+
+# get max seasonal estimates from full dataset
+origests <- anlz_metseason(modorig, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T) %>% 
+  mutate(chlsmp = 'Full dataset')
+
+# combine all results
+allests <- bind_rows(ests, origests) %>% 
+  mutate(
+    col = case_when(
+      chlsmp == 'Full dataset' ~ 'Full dataset', 
+      T ~ 'Down-sampled'
+    ), 
+    col = factor(col, levels = c('Full dataset', 'Down-sampled')),
+    chlsmp = factor(chlsmp, levels = c('Full dataset', rnds))
+  )
+
+head(allests)
+```
+
+Now make the plot for comparison.
+
+```{r, fig.height = 3, fig.width = 9}
+wd <- 0.5
+ggplot(data = allests, aes(x = yr, y = bt_met, color = col, group = chlsmp)) + 
+  geom_point(position = position_dodge(width = wd)) +
+  geom_errorbar(aes(ymin = bt_lwr, ymax = bt_upr), position = position_dodge(width = wd), width = 0) +
+  scale_y_log10() +
+  scale_color_manual(values = c('tomato1', 'black')) +
+  theme_bw() + 
+  theme(
+    axis.title.x = element_blank(), 
+    legend.position = 'top'
+  ) + 
+  labs(
+    y = 'Chlorophyll-a (ug/L)', 
+    color = NULL
+  )
+```
+
