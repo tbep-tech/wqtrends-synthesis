@@ -1,0 +1,154 @@
+---
+title: "Initial detiding effort"
+author: "M. W. Beck"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+  toc: true
+toc_depth: 3
+toc_float: true
+---
+  
+This document provides a short attempt at detiding a chlorophyll time series using a genereralized additive model. All source materials are [here](https://github.com/tbep-tech/wqtrends-synthesis).  
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(patchwork)
+library(lubridate)
+library(here)
+library(mgcv)
+library(knitr)
+library(reactable)
+library(mgcViz)
+
+opts_chunk$set(warning = FALSE, message = FALSE, echo = T)
+
+load(file = here('data/datprc.RData'))
+load(file = here('data/tiddat.RData'))
+
+tab_fun <- function(datin, dig = 2, rows = 5){
+  
+  out <- reactable(datin,
+    defaultColDef = colDef(
+      footerStyle = list(fontWeight = "bold"),
+      format = colFormat(digits = dig, separators = F),
+      resizable = TRUE
+    ),
+    filterable = T,
+    defaultPageSize = rows
+  )
+  
+  return(out)
+  
+}
+```
+
+Chlorophyll data from station 30 in South Bay are combined with a vector of tidal mixing velocity as a rough measure of spring/neap tidal effects.  The tidal mixing velocity is from an ADCP deployed at Dumbarton Bridge and was estimated as the squared daily maximum of velocities.
+
+```{r}
+# chl data station 30
+chldat <- datprc %>% 
+  filter(station == 30) %>% 
+  filter(param == 'chl')
+
+# subset tidal data by date range in chldat
+tiddat <- tiddat %>% 
+  filter(date >= min(chldat$date) & date <= max(chldat$date))
+
+# combine chl and tidal data
+alldat <- chldat %>% 
+  left_join(tiddat, by = 'date')
+
+tab_fun(alldat)
+```
+
+A GAM was created following `gam2_flwsal` in [Murphy et al. 2019](https://doi.org/10.1016/j.envsoft.2019.03.027).
+
+```{r}
+mod <- gam(log10(value) ~ cont_year + s(cont_year, k = 50) + 
+             s(doy, bs = 'cc') + 
+             ti(cont_year, doy ,bs = c('tp', 'cc')) + 
+             s(tidmix, k = 40) + 
+             ti(tidmix, doy, bs= c('tp', 'cc')) + 
+             ti(tidmix, cont_year, bs = c('tp', 'tp')) +
+             ti(tidmix, doy, cont_year, bs = c('tp', 'cc', 'tp')),
+           knots= list(doy = c(1, 365)), select = T,
+           data = alldat)
+
+```
+
+The detided results are estimated using a prediction matrix with all the time components and the range of tidal values observed applied to each time step.  The predicted values are then averaged across the tidal predictions for each time step.
+
+```{r}
+# get tide-normalized data
+prdnrm <- range(alldat$tidmix, na.rm = T) %>% 
+  {seq(.[1], .[2], length.out = 10)} %>% 
+  crossing(
+    tidmix = ., 
+    alldat[, c('doy', 'cont_year')]
+  ) 
+tab_fun(prdnrm)
+prdnrm <- prdnrm %>% 
+  mutate(
+    prd = predict(mod, .)
+  ) %>% 
+  group_by(doy, cont_year) %>% 
+  summarise(
+    value_dtd = mean(prd, na.rm = T), 
+    .groups = 'drop'
+  )
+tab_fun(prdnrm)
+```
+
+The detided results are combined with the original data. 
+
+```{r, fig.height = 4, fig.width = 8}
+# combine tide-normalizd data with all data
+toplo <- alldat %>% 
+  full_join(prdnrm, by = c('cont_year', 'doy')) %>% 
+  mutate(
+    value_fit = 10^predict(mod, newdata = .), 
+    value_dtd = 10^value_dtd
+  ) %>% 
+  select(
+    date,
+    value,
+    value_fit,
+    value_dtd
+  ) 
+
+ggplot(toplo, aes(x = date)) + 
+  geom_point(aes(y = value)) + 
+  geom_line(aes(y = value_fit, color = 'Fit'), size = 1) + 
+  geom_line(aes(y = value_dtd, color = 'Detided'), size = 1) +
+  scale_colour_manual(values= c('blue', 'red')) +
+  scale_y_log10() + 
+  theme_minimal() +
+  labs(
+    color = NULL, 
+    x = NULL, 
+    y = 'Chl-a (ug/L)'
+  )
+```
+
+Detiding didn't appear to do much in this example. Looking at a scatterplot of the tidal mixing velocity vs chlorophyll shows there isn't much of a relationship. 
+
+```{r, fig.height = 4, fig.width = 4}
+ggplot(alldat, aes(x = tidmix, y = value)) + 
+  geom_point(aes(y = value)) + 
+  geom_smooth() + 
+  scale_y_log10() + 
+  theme_minimal() +
+  labs(
+    color = NULL, 
+    x = bquote('Tidal mixing '~ (m/s)^2), 
+    y = 'Chl-a (ug/L)'
+  )
+```
+
+The predicted spline for tidal mixing is also flat. 
+
+```{r, fig.height = 4, fig.width = 4}
+plot(getViz(mod), select = 4)
+```
+
