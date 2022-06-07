@@ -4,10 +4,12 @@ author: "M. W. Beck"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
-    toc: true
-    toc_depth: 3
-    toc_float: true
+    toc: false
 ---
+
+# {.tabset .tabset-pills}
+
+## Setup and background
 
 This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorophyll concentration as estimated from mixed-effects meta-analysis analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown below in the `chldat` data object.  All source materials are [here](https://github.com/tbep-tech/wqtrends-synthesis).  
 
@@ -29,7 +31,6 @@ library(knitr)
 opts_chunk$set(warning = FALSE, message = FALSE, echo = T)
 
 load(file = here('data/datprc.RData'))
-load(file = here('data/tiddat.RData'))
 
 # chl data station 30
 chldat <- datprc %>% 
@@ -65,7 +66,7 @@ This is the dataset that is evaluated.  Note the addition of different columns f
 head(chldat)
 ```
 
-## Effect of sample effort 
+## Down-sampling methods
   
 Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
 
@@ -379,7 +380,7 @@ cmptrnd_plo(cmptrnd)
 
 The results are similar as above, with one difference for the quarterly comparisons. The trend for 1992 - 2005, JFM period is significant for the first random subsample, but not the second.  So, the random draw does not appear to substantially influence our conclusions.
 
-### Evaluate effect on maximum peak estimates
+## Evaluate effect on maximum peak estimates
 
 The above was repeated for the February to April period using five random down-sampled estimates and extracting the estimate of the maximum chlorophyll peak.  This tests the hypothesis that less frequent sampling earlier in the period of record may not capture high chlorophyll events and that should be reflected in lower GAM estimates in the down-sampled data. The down-sampling assumes equal month.
 
