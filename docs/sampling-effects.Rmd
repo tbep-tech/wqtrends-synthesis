@@ -439,3 +439,70 @@ ggplot(data = allests, aes(x = yr, y = bt_met, color = col, group = chlsmp)) +
   )
 ```
 
+The above was repeated using 1000 random samples, then taking the average of the seasonal metrics for each random sample in each year.  The average of the random samples was estimated mixed-effects meta-analysis to account for the uncertainty of each seasonal metric for each random sample.  The mixed-effects meta-analysis model was used to calculate an intercept only model. 
+
+The random samples and their seasonal metrics take about 3 hours to run, but the code is shown here for reproducibility.
+
+```{r, eval = F}
+rnds <- paste('Equal month', 1:1000)
+
+# get max seasonal estimates from random down-sampled data
+str <- Sys.time()
+smpests <- tibble(chlsmp = rnds) %>% 
+  group_by(chlsmp) %>% 
+  nest() %>% 
+  mutate(
+    data = list(chldat), 
+    data = purrr::map(data, downsamp_fun1), 
+    mods = purrr::map(data, anlz_gam, trans = 'log10'),
+    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T)
+  ) %>% 
+  select(chlsmp, vals) %>% 
+  unnest('vals')
+print(Sys.time() - str)
+
+save(smpests, file = here('data/smpests.RData'))
+```
+
+```{r, fig.height = 3, fig.width = 9}
+load(file = here('data/smpests.RData'))
+
+cmb <- smpests %>%
+  group_by(yr) %>%
+  nest() %>% 
+  mutate(
+    mixmet = purrr::map(data, function(x) mixmeta::mixmeta(met ~ 1, S = se, random = ~1|chlsmp, data = x, method = 'reml')), 
+    met = purrr::map(mixmet, function(x) summary(x)$coefficients[1]),
+    se = purrr::map(mixmet, function(x) summary(x)$coefficients[2])
+  ) cmb %>% 
+  select(yr, met, se) %>% 
+  unnest(cols = c('met', 'se')) %>% 
+  mutate(
+    bt_lwr = 10^(met - 1.96 * se),
+    bt_upr = 10^(met + 1.96 * se),
+    bt_met = 10^met,
+    chlsmp = '1000 sim avg'
+  )
+  
+# combine all results
+allests <- bind_rows(cmb, origests) %>% 
+  mutate(chlsmp = factor(chlsmp, levels = c('Full dataset', '1000 sim avg')))
+
+wd <- 0.5
+ggplot(data = allests, aes(x = yr, y = bt_met, color = chlsmp, group = chlsmp)) + 
+  geom_point(position = position_dodge(width = wd)) +
+  geom_errorbar(aes(ymin = bt_lwr, ymax = bt_upr), position = position_dodge(width = wd), width = 0) +
+  scale_y_log10() +
+  scale_color_manual(values = c('tomato1', 'black')) +
+  theme_bw() + 
+  theme(
+    axis.title.x = element_blank(), 
+    legend.position = 'top'
+  ) + 
+  labs(
+    y = 'Chlorophyll-a (ug/L)', 
+    color = NULL
+  )
+
+```
+
