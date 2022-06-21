@@ -43,7 +43,7 @@ tab_fun <- function(datin, dig = 2, rows = 5){
 }
 ```
 
-Chlorophyll data from station 30 in South Bay are combined with a vector of tidal mixing velocity as a rough measure of spring/neap tidal effects.  The tidal mixing velocity is from an ADCP deployed at Dumbarton Bridge and was estimated as the squared daily maximum of velocities.
+Chlorophyll data from station 30 in South Bay are combined with a vector of tidal mixing velocity as a rough measure of spring/neap tidal effects.  The tidal mixing velocity is from an ADCP deployed at Dumbarton Bridge and was estimated as the squared daily maximum of velocities.  Higher values suggest greater tidal mixing.
 
 ```{r}
 # chl data station 30
@@ -62,22 +62,15 @@ alldat <- chldat %>%
 tab_fun(alldat)
 ```
 
-A GAM was created following `gam2_flwsal` in [Murphy et al. 2019](https://doi.org/10.1016/j.envsoft.2019.03.027).
+A GAM was created following similar methods in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).
 
 ```{r}
-mod <- gam(log10(value) ~ cont_year + s(cont_year, k = 50) + 
-             s(doy, bs = 'cc') + 
-             ti(cont_year, doy ,bs = c('tp', 'cc')) + 
-             s(tidmix, k = 40) + 
-             ti(tidmix, doy, bs= c('tp', 'cc')) + 
-             ti(tidmix, cont_year, bs = c('tp', 'tp')) +
-             ti(tidmix, doy, cont_year, bs = c('tp', 'cc', 'tp')),
-           knots= list(doy = c(1, 365)), select = T,
+kyr <- length(unique(alldat$yr)) * 12
+mod <- gam(log10(value) ~ s(cont_year, k = kyr) + s(tidmix, k = 20),
            data = alldat)
-
 ```
 
-The detided results are estimated using a prediction matrix with all the time components and the range of tidal values observed applied to each time step.  The predicted values are then averaged across the tidal predictions for each time step.
+The detided results are estimated using a prediction matrix with continuous year and the range of tidal values observed applied to each time step.  The predicted values are then averaged across the tidal predictions for each time step.
 
 ```{r}
 # get tide-normalized data
@@ -85,14 +78,14 @@ prdnrm <- range(alldat$tidmix, na.rm = T) %>%
   {seq(.[1], .[2], length.out = 10)} %>% 
   crossing(
     tidmix = ., 
-    alldat[, c('doy', 'cont_year')]
+    cont_year = alldat$cont_year
   ) 
 tab_fun(prdnrm)
 prdnrm <- prdnrm %>% 
   mutate(
     prd = predict(mod, .)
   ) %>% 
-  group_by(doy, cont_year) %>% 
+  group_by(cont_year) %>% 
   summarise(
     value_dtd = mean(prd, na.rm = T), 
     .groups = 'drop'
@@ -105,7 +98,7 @@ The detided results are combined with the original data.
 ```{r, fig.height = 4, fig.width = 8}
 # combine tide-normalizd data with all data
 toplo <- alldat %>% 
-  full_join(prdnrm, by = c('cont_year', 'doy')) %>% 
+  full_join(prdnrm, by = 'cont_year') %>% 
   mutate(
     value_fit = 10^predict(mod, newdata = .), 
     value_dtd = 10^value_dtd
@@ -149,6 +142,65 @@ ggplot(alldat, aes(x = tidmix, y = value)) +
 The predicted spline for tidal mixing is also flat. 
 
 ```{r, fig.height = 4, fig.width = 4}
-plot(getViz(mod), select = 4)
+plot(getViz(mod), select = 2)
+```
+
+Finally, here's a breakdown of the distribution of chlorophyll for different ranges of the tidal mixing values, where the ranges are defined by quartiles.
+
+```{r, fig.height = 7, fig.width = 7}
+toplo <- alldat %>% 
+  mutate(
+    tidqrt = cut(tidmix, 
+                 breaks = quantile(tidmix, c(0, 0.25, 0.5, 0.75, 1), na.rm = T), 
+                 labels = c('1Q', '2Q', '3Q', '4Q')
+                 ), 
+    yrbrk = cut(yr, 
+                breaks = c(-Inf, 1980, 1990, 2000, 2010, Inf),
+                labels = c('pre-1980', '1980-1990', '1990-2000', '2000-2010', 'post-2010')
+                ), 
+    seasbrk = factor(quarter(date), 
+                     levels = c('1', '2', '3', '4'), 
+                     labels = c('JFM', 'AMJ', 'JAS', 'OND')
+                )
+  ) %>% 
+  filter(!is.na(tidqrt))
+
+p1 <- ggplot(toplo, aes(x = tidqrt, y = value)) + 
+  geom_boxplot(color = 'tomato1', alpha = 0.2, size = 1, outlier.shape = NA, fill = 'tomato1') + 
+  geom_jitter(size = 0.5) + 
+  scale_y_log10() + 
+  theme_minimal() + 
+  labs(
+    x = NULL,
+    y = NULL, 
+    title = 'Chlorophyll values by tidal mixing quartiles',
+    subtitle = '(a) Distribution for all data'
+  )
+
+p2 <- ggplot(toplo, aes(x = tidqrt, y = value)) + 
+  geom_boxplot(color = 'tomato1', alpha = 0.2, size = 1, outlier.shape = NA, fill = 'tomato1') + 
+  facet_wrap(~yrbrk, ncol = 5) +
+  geom_jitter(size = 0.5) + 
+  scale_y_log10() + 
+  theme_minimal() + 
+  labs(
+    x = NULL,
+    y = 'Chl-a (ug/L)',
+    subtitle = '(b) Distribution by annual periods'
+  )
+
+p3 <- ggplot(toplo, aes(x = tidqrt, y = value)) + 
+  geom_boxplot(color = 'tomato1', alpha = 0.2, size = 1, outlier.shape = NA, fill = 'tomato1') + 
+  facet_wrap(~seasbrk, ncol = 4) +
+  geom_jitter(size = 0.5) + 
+  scale_y_log10() + 
+  theme_minimal() + 
+  labs(
+    x = 'Tidal mixing quartile', 
+    y = NULL,
+    subtitle = '(c) Distribution by season'
+  )
+
+p1 + p2 + p3 + plot_layout(ncol = 1)
 ```
 
