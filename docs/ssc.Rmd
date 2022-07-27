@@ -33,7 +33,7 @@ The `rawdat` object now includes ssc (mg/L) from Dumbarton Bridge as daily-avera
 head(rawdat)
 ```
 
-The `sscdat` object includes the full record of ssc data which is used in the package for creating prediction matrices for the downstream analysis and plotting functions.  This allows for an assessment of results from a fitted model at points in the time series when chlorophyll-a was not monitored but ssc is available.  The ssc data are available for most but not all days.
+The `sscdat` object includes the full record of ssc data.  The dataset is used to create prediction matrices for the downstream analysis and plotting functions.  This allows for an assessment of results from a fitted model at points in the time series when chlorophyll-a was not monitored, but ssc is available.  The ssc data are available for most but not all days.
 
 ```{r}
 head(sscdat)
@@ -49,14 +49,14 @@ mod1 <- anlz_gam(tomod, trans = 'log10')
 mod1
 ```
 
-Changing the knots for `cont_year` and `ssc` can be done with the `kts` and `ktssc` arguments.
+Changing the knots for `cont_year` and `ssc` can be done with the `kts` and `ssckts` arguments.
 
 ```{r}
 mod2 <- anlz_gam(tomod, trans = 'log10', kts = 10, ssckts = 200)
 mod2
 ```
 
-The original GAM model without ssc can be created setting the `usessc` argument to `FALSE`. 
+The original GAM formula without ssc can be used by setting the `usessc` argument to `FALSE`. 
 
 ```{r}
 mod3 <- anlz_gam(tomod, trans = 'log10', usessc = FALSE)
@@ -75,8 +75,8 @@ The plotting functions can also be used as before.
 
 ```{r, fig.height = 3, fig.width = 9}
 show_prdseries(mod1, ylab = 'Chlorophyll-a (ug/L)')
-show_prdseries(mod1, ylab = 'Chlorophyll-a (ug/L)')
 show_prdseries(mod2, ylab = 'Chlorophyll-a (ug/L)')
+show_prdseries(mod3, ylab = 'Chlorophyll-a (ug/L)')
 ```
 ```{r, fig.height = 5, fig.width = 5}
 show_prddoy(mod1, ylab = 'Chlorophyll-a (ug/L)')
