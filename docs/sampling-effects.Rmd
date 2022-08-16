@@ -4,17 +4,18 @@ author: "M. W. Beck"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
-    toc: true
-    toc_depth: 3
-    toc_float: true
+    toc: false
 ---
 
-This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorophyll concentration as estimated from mixed-meta analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown below in the `chldat` data object.  Tidal data is obtained from hourly estimates of tidal velocity at Dumbarton Bridge, where the daily maximum velocity is used as measure of tidal mixing which closely follows the spring/neap tidal cycle. All source materials are [here](https://github.com/tbep-tech/wqtrends-synthesis).  
+# {.tabset .tabset-pills}
 
-Two questions addressed herein include: 
+## Setup and background
+
+This document explores how variation in sampling frequency and timing may influence conclusions for trend analyses. We use seasonal metrics of chlorophyll concentration as estimated from mixed-effects meta-analysis analysis of GAM results as described in [Beck et al. 2022](https://doi.org/10.1016/j.scitotenv.2021.149927).  Observational chlorophyll data are used for station 30 in South Bay, as shown below in the `chldat` data object.  All source materials are [here](https://github.com/tbep-tech/wqtrends-synthesis).  
+
+The primary question addressed is: 
   
-1. How does variation in sample effort affect conclusions on trends, given that effort varied by month and season for the duration of the time series?
-1. How does timing of sampling with respect to tidal mixing affect conclusions on trends?
+* How does variation in sample effort affect conclusions on trends, given that effort varied by month and season for the duration of the time series?
   
 First, some setup material for the analysis: 
 
@@ -30,20 +31,15 @@ library(knitr)
 opts_chunk$set(warning = FALSE, message = FALSE, echo = T)
 
 load(file = here('data/datprc.RData'))
-load(file = here('data/tiddat.RData'))
 
 # chl data station 30
 chldat <- datprc %>% 
   filter(station == 30) %>% 
   filter(param == 'chl')
 
-# subset tidal data by date range in chldat
-tiddat <- tiddat %>% 
-  filter(date >= min(chldat$date) & date <= max(chldat$date))
-
 # year groups
 delim <- 3
-delims <- unique(year(tiddat$date)) %>% 
+delims <- unique(year(chldat$date)) %>% 
   as.numeric %>% 
   range %>% 
   {seq(.[1], .[2], length.out = delim + 1)} %>% 
@@ -70,7 +66,7 @@ This is the dataset that is evaluated.  Note the addition of different columns f
 head(chldat)
 ```
 
-## Effect of sample effort 
+## Down-sampling methods
   
 Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
 
@@ -384,7 +380,7 @@ cmptrnd_plo(cmptrnd)
 
 The results are similar as above, with one difference for the quarterly comparisons. The trend for 1992 - 2005, JFM period is significant for the first random subsample, but not the second.  So, the random draw does not appear to substantially influence our conclusions.
 
-### Evaluate effect on maximum peak estimates
+## Evaluate effect on maximum peak estimates
 
 The above was repeated for the February to April period using five random down-sampled estimates and extracting the estimate of the maximum chlorophyll peak.  This tests the hypothesis that less frequent sampling earlier in the period of record may not capture high chlorophyll events and that should be reflected in lower GAM estimates in the down-sampled data. The down-sampling assumes equal month.
 
@@ -441,5 +437,72 @@ ggplot(data = allests, aes(x = yr, y = bt_met, color = col, group = chlsmp)) +
     y = 'Chlorophyll-a (ug/L)', 
     color = NULL
   )
+```
+
+The above was repeated using 1000 random samples, then taking the average of the seasonal metrics for each random sample in each year.  The average of the random samples was estimated mixed-effects meta-analysis to account for the uncertainty of each seasonal metric for each random sample.  The mixed-effects meta-analysis model was used to calculate an intercept only model. 
+
+The random samples and their seasonal metrics take about 3 hours to run, but the code is shown here for reproducibility.
+
+```{r, eval = F}
+rnds <- paste('Equal month', 1:1000)
+
+# get max seasonal estimates from random down-sampled data
+str <- Sys.time()
+smpests <- tibble(chlsmp = rnds) %>% 
+  group_by(chlsmp) %>% 
+  nest() %>% 
+  mutate(
+    data = list(chldat), 
+    data = purrr::map(data, downsamp_fun1), 
+    mods = purrr::map(data, anlz_gam, trans = 'log10'),
+    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T)
+  ) %>% 
+  select(chlsmp, vals) %>% 
+  unnest('vals')
+print(Sys.time() - str)
+
+save(smpests, file = here('data/smpests.RData'))
+```
+
+```{r, fig.height = 3, fig.width = 9}
+load(file = here('data/smpests.RData'))
+
+cmb <- smpests %>%
+  group_by(yr) %>%
+  nest() %>% 
+  mutate(
+    mixmet = purrr::map(data, function(x) mixmeta::mixmeta(met ~ 1, S = se, random = ~1|chlsmp, data = x, method = 'reml')), 
+    met = purrr::map(mixmet, function(x) summary(x)$coefficients[1]),
+    se = purrr::map(mixmet, function(x) summary(x)$coefficients[2])
+  ) cmb %>% 
+  select(yr, met, se) %>% 
+  unnest(cols = c('met', 'se')) %>% 
+  mutate(
+    bt_lwr = 10^(met - 1.96 * se),
+    bt_upr = 10^(met + 1.96 * se),
+    bt_met = 10^met,
+    chlsmp = '1000 sim avg'
+  )
+  
+# combine all results
+allests <- bind_rows(cmb, origests) %>% 
+  mutate(chlsmp = factor(chlsmp, levels = c('Full dataset', '1000 sim avg')))
+
+wd <- 0.5
+ggplot(data = allests, aes(x = yr, y = bt_met, color = chlsmp, group = chlsmp)) + 
+  geom_point(position = position_dodge(width = wd)) +
+  geom_errorbar(aes(ymin = bt_lwr, ymax = bt_upr), position = position_dodge(width = wd), width = 0) +
+  scale_y_log10() +
+  scale_color_manual(values = c('tomato1', 'black')) +
+  theme_bw() + 
+  theme(
+    axis.title.x = element_blank(), 
+    legend.position = 'top'
+  ) + 
+  labs(
+    y = 'Chlorophyll-a (ug/L)', 
+    color = NULL
+  )
+
 ```
 

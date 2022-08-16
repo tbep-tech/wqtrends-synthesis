@@ -1,0 +1,86 @@
+---
+title: "wqtrends update with suspended sediment concentration data"
+author: "M. W. Beck"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: false
+---
+
+```{r setup, warning = F, message = F, echo = F}
+library(knitr)
+opts_chunk$set(warning = FALSE, message = FALSE, echo = T, fig.align = 'center')
+```
+
+First, install the wqtrends package from the ssc branch on GitHub:
+
+```{r, eval = F}
+install.packages('devtools')
+library(devtools)
+install_github('tbep-tech/wqtrends', ref = 'ssc')
+```
+
+Load the package (and dplyr): 
+
+```{r, warning = F, message = F, echo = T}
+library(wqtrends)
+library(dplyr)
+```
+
+The `rawdat` object now includes ssc (mg/L) from Dumbarton Bridge as daily-averaged values.
+
+```{r}
+head(rawdat)
+```
+
+The `sscdat` object includes the full record of ssc data.  The dataset is used to create prediction matrices for the downstream analysis and plotting functions.  This allows for an assessment of results from a fitted model at points in the time series when chlorophyll-a was not monitored, but ssc is available.  The ssc data are available for most but not all days.
+
+```{r}
+head(sscdat)
+```
+
+The `anlz_gam` function includes an additional smoother for ssc. By default, the number of knots for the continuous year variable (`cont_year`) is set to "high" as 12 times the number of years in the input data.  The default number of knots for ssc is 24.
+
+```{r}
+tomod <- rawdat %>% 
+  filter(station %in% 34) %>% 
+  filter(param %in% 'chl')
+mod1 <- anlz_gam(tomod, trans = 'log10')
+mod1
+```
+
+Changing the knots for `cont_year` and `ssc` can be done with the `kts` and `ssckts` arguments.
+
+```{r}
+mod2 <- anlz_gam(tomod, trans = 'log10', kts = 10, ssckts = 200)
+mod2
+```
+
+The original GAM formula without ssc can be used by setting the `usessc` argument to `FALSE`. 
+
+```{r}
+mod3 <- anlz_gam(tomod, trans = 'log10', usessc = FALSE)
+mod3
+```
+
+Fits for each model can be assessed as before using the `anlz_fit` function.
+
+```{r}
+anlz_fit(mod1)
+anlz_fit(mod2)
+anlz_fit(mod3)
+```
+
+The plotting functions can also be used as before. 
+
+```{r, fig.height = 3, fig.width = 9}
+show_prdseries(mod1, ylab = 'Chlorophyll-a (ug/L)')
+show_prdseries(mod2, ylab = 'Chlorophyll-a (ug/L)')
+show_prdseries(mod3, ylab = 'Chlorophyll-a (ug/L)')
+```
+```{r, fig.height = 5, fig.width = 5}
+show_prddoy(mod1, ylab = 'Chlorophyll-a (ug/L)')
+show_prddoy(mod2, ylab = 'Chlorophyll-a (ug/L)')
+show_prddoy(mod3, ylab = 'Chlorophyll-a (ug/L)')
+```
+
