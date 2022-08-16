@@ -1,0 +1,233 @@
+---
+title: "Exploratory analysis of sampling effect on trend estimates in South Bay, Pt 2"
+author: 
+   - name: Dr. Marcus Beck, <mbeck@tbep.org>
+institute: "Tampa Bay Estuary Program"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format:
+  html:
+    theme: cosmo
+    code-tools: 
+      source: https://github.com/tbep-tech/wqtrends-synthesis/docs/sampling-effects2.qmd
+execute:
+  echo: true
+  warning: false
+  message: false
+filters:
+  - lightbox
+  
+lightbox: auto
+---
+
+# Overview
+
+This document evaluates the effect of down-sampling a long-term chlorophyll time series at station 30 in South Bay of the San Francisco Estuary. The methods herein build upon those in the previous analysis of sampling effects described [here](https://tbep-tech.github.io/wqtrends-synthesis/sampling-effects).  The goal is to create a "large" number of down-sampled datasets to assess the effect on chloropyll variation.  This differs from the previous analysis in two ways:
+
+1. The previous analysis only evaluated five random down-sampled subsets, here we evaluate 1000. 
+1. The previous anlaysis evalutaed changed in trend estimates as the the maxium chlorophyll peak using methods in the [wqtrends](https://tbep-tech.github.io/wqtrends/) package, here we only evaluate changes in chlorophyll variance, 
+
+Further, only the down-sampling that evaluates equal effort between all months and years is used.  
+
+# Methods
+
+First, the required packages are loaded, the data are imported, and chlorophyll at station 30 is filtered. The data are also subset to the date ranges in the tidal data and additional date columns are created.
+
+```{r}
+#| include: true
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+library(here)
+
+load(file = here('data/datprc.RData'))
+load(file = here('data/tiddat.RData'))
+
+# chl data station 30
+chldat <- datprc %>% 
+  filter(station == 30) %>% 
+  filter(param == 'chl')
+
+# subset tidal data by date range in chldat
+tiddat <- tiddat %>% 
+  filter(date >= min(chldat$date) & date <= max(chldat$date))
+
+# year groups
+delim <- 3
+delims <- unique(year(tiddat$date)) %>% 
+  as.numeric %>% 
+  range %>% 
+  {seq(.[1], .[2], length.out = delim + 1)} %>% 
+  round(0)
+
+# add temporal groupings to chldat 
+chldat <- chldat %>% 
+  mutate(
+    yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
+    qrt = quarter(date),
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('JFM', 'AMJ', 'JAS', 'OND')),
+    seas = case_when(
+      mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
+      mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
+      T ~ NA_character_
+    ), 
+    seas = factor(seas, levels = c('Feb 1 - Apr 30', 'Aug 1 - Oct 31'))
+  )
+```
+
+The down-sampling function is created. 
+
+```{r}
+downsamp_fun1 <- function(datin){
+  
+  tosmp <- datin %>% 
+    group_by(mo, yrgrp) %>% 
+    summarise(
+      cnt = n(), 
+      .groups = 'drop'
+    ) %>% 
+    group_by(mo) %>% 
+    filter(cnt == min(cnt)) %>% 
+    ungroup() %>% 
+    select(-yrgrp)
+  
+  minmo <- min(tosmp$cnt)
+  
+  out <- datin %>%
+    group_by(yrgrp, mo) %>% 
+    sample_n(size = minmo) %>% 
+    ungroup()
+  
+  return(out)  
+  
+}
+```
+
+The down-sampled datasets are created. 
+
+```{r}
+rnds <- paste('Equal month', 1:1000)
+
+# get max seasonal estimates from random down-sampled data
+ests <- tibble(chlsmp = rnds) %>% 
+  group_by(chlsmp) %>% 
+  nest() %>% 
+  mutate(
+    data = list(chldat), 
+    data = purrr::map(data, downsamp_fun1)
+  )
+```
+
+A plot of sample effort for the original dataset and one of the down-sampled datasets can be compared to illustrate the difference.  First, the plot function is created.
+
+```{r}
+smpeff_plo <- function(datin){
+
+  toplo <- datin 
+  
+  p1 <- ggplot(toplo, aes(x = mo, group = yrgrp, fill = yrgrp)) + 
+    geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+    theme_minimal() + 
+    labs(
+      fill = 'Year group', 
+      x = NULL ,
+      y = 'Observations'
+    )
+  
+  p2 <- ggplot(toplo, aes(x = qrt, group = yrgrp, fill = yrgrp)) + 
+    geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+    theme_minimal() + 
+    labs(
+      fill = 'Year group', 
+      x = NULL ,
+      y = 'Observations'
+    )
+  
+  p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
+    geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
+    theme_minimal() + 
+    labs(
+      fill = 'Year group', 
+      x = NULL ,
+      y = 'Observations'
+    )
+  
+  p <- p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+  
+  return(p)
+  
+}
+```
+
+Plot of sample effort for the original dataset: 
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+smpeff_plo(chldat)
+```
+
+Plot of sample effort for one of the down-sampled datasets: 
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+smpeff_plo(ests$data[[1]])
+```
+
+For each down-sampled dataset, the variance of chlorophyll in each year is estimated.  The median variance and the 5th/95th percentiles are then estimated across all down-sampled datasets for each year.
+
+```{r}
+dwnest <- ests %>% 
+  mutate(
+    data = purrr::map(data, function(x){
+      x %>% 
+        group_by(yr) %>% 
+        summarise(varchl = var(value, na.rm = T))
+    })
+  ) %>% 
+  unnest('data') %>% 
+  group_by(yr) %>% 
+  summarise(
+    medvar = median(varchl, na.rm = T), 
+    loest = quantile(varchl, probs = 0.05, na.rm = T),
+    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+  )
+head(dwnest)
+```
+
+The same is done for the actual dataset for comparison. 
+
+```{r}
+actest <- chldat %>% 
+  group_by(yr) %>% 
+  summarise(varchl = var(value, na.rm = T))
+head(actest)
+```
+
+Then the two can be compared to see how down-sampling effects the estimated variance compared to the actual dataset. 
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+ggplot(dwnest, aes(x = yr, y = medvar, group = yr)) + 
+  geom_point(aes(col = 'Estimated')) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated'), width = 0) +
+  geom_point(data = actest, aes(y = varchl, col = 'Actual')) +
+  scale_color_manual(values = c('black', 'red')) +
+  scale_y_log10() + 
+  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
+         color = guide_legend(override.aes = list(linetype = 0))) +
+  theme_bw() + 
+  theme(
+    legend.position = 'top'
+  ) +
+  labs(
+    x = NULL, 
+    y = 'Chl-a variance by year', 
+    color = NULL
+  )
+```
+
