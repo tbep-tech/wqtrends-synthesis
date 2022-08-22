@@ -230,3 +230,127 @@ ggplot(dwnest, aes(x = yr, y = medvar, group = yr)) +
   )
 ```
 
+The same summaries are shown below, but grouped by month, quarter, and season.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+
+# summarize down-sampled variance by month, quarter, season
+dwnest <- ests %>% 
+  mutate(
+    datamo = purrr::map(data, function(x){
+      x %>% 
+        group_by(mo) %>% 
+        summarise(varchl = var(value, na.rm = T))
+    }), 
+    dataqrt = purrr::map(data, function(x){
+      x %>% 
+        group_by(qrt) %>% 
+        summarise(varchl = var(value, na.rm = T))
+    }),
+    dataseas = purrr::map(data, function(x){
+      x %>% 
+        filter(!is.na(seas)) %>% 
+        group_by(seas) %>% 
+        summarise(varchl = var(value, na.rm = T))
+    })
+  ) 
+ 
+# get variance ranges across sub-samples for month, quarter, season
+dwnmo <- dwnest %>% 
+  select(chlsmp, datamo) %>% 
+  unnest('datamo') %>% 
+  group_by(mo) %>% 
+  summarise(
+    medvar = median(varchl, na.rm = T), 
+    loest = quantile(varchl, probs = 0.05, na.rm = T),
+    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+  )
+dwnqrt <- dwnest %>% 
+  select(chlsmp, dataqrt) %>% 
+  unnest('dataqrt') %>% 
+  group_by(qrt) %>% 
+  summarise(
+    medvar = median(varchl, na.rm = T), 
+    loest = quantile(varchl, probs = 0.05, na.rm = T),
+    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+  )
+dwnseas <- dwnest %>% 
+  select(chlsmp, dataseas) %>% 
+  unnest('dataseas') %>% 
+  group_by(seas) %>% 
+  summarise(
+    medvar = median(varchl, na.rm = T), 
+    loest = quantile(varchl, probs = 0.05, na.rm = T),
+    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+  )
+
+# get the actual variance for month, quarter, and season
+actmo <- chldat %>%  
+  group_by(mo) %>% 
+  summarise(
+    medvar = var(value, na.rm = T)
+  )
+actqrt <- chldat %>%  
+  group_by(qrt) %>% 
+  summarise(
+    medvar = var(value, na.rm = T)
+  )
+actseas <- chldat %>%  
+  filter(!is.na(seas)) %>% 
+  group_by(seas) %>% 
+  summarise(
+    medvar = var(value, na.rm = T)
+  )
+
+# create the plot
+p1 <- ggplot(dwnmo, aes(x = mo, y = medvar, group = mo)) + 
+  geom_point(aes(col = 'Estimated (equal effort)')) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
+  geom_point(data = actmo, aes(y = medvar, col = 'Actual (unequal effort)')) +
+  scale_color_manual(values = c('black', 'red')) +
+  scale_y_log10() + 
+  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
+         color = guide_legend(override.aes = list(linetype = 0))) +
+  labs(
+    x = NULL, 
+    y = 'Chl-a variance', 
+    color = NULL
+  )
+
+p2 <- ggplot(dwnqrt, aes(x = qrt, y = medvar, group = qrt)) + 
+  geom_point(aes(col = 'Estimated (equal effort)')) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
+  geom_point(data = actqrt, aes(y = medvar, col = 'Actual (unequal effort)')) +
+  scale_color_manual(values = c('black', 'red')) +
+  scale_y_log10() + 
+  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
+         color = guide_legend(override.aes = list(linetype = 0))) +
+  labs(
+    x = NULL, 
+    y = 'Chl-a variance', 
+    color = NULL
+  )
+
+p3 <- ggplot(dwnseas, aes(x = seas, y = medvar, group = seas)) + 
+  geom_point(aes(col = 'Estimated (equal effort)')) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
+  geom_point(data = actseas, aes(y = medvar, col = 'Actual (unequal effort)')) +
+  scale_color_manual(values = c('black', 'red')) +
+  scale_y_log10() + 
+  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
+         color = guide_legend(override.aes = list(linetype = 0))) +
+  labs(
+    x = NULL, 
+    y = 'Chl-a variance', 
+    color = NULL
+  )
+
+p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect') & 
+  theme_bw() + 
+  theme(
+    legend.position = 'top'
+  ) 
+```
+
