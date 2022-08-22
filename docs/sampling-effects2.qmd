@@ -8,7 +8,7 @@ format:
   html:
     theme: cosmo
     code-tools: 
-      source: https://github.com/tbep-tech/wqtrends-synthesis/docs/sampling-effects2.qmd
+      source: https://github.com/tbep-tech/wqtrends-synthesis/blob/main/docs/sampling-effects2.qmd
 execute:
   echo: true
   warning: false
@@ -21,12 +21,11 @@ lightbox: auto
 
 # Overview
 
-This document evaluates the effect of down-sampling a long-term chlorophyll time series at station 30 in South Bay of the San Francisco Estuary. The methods herein build upon those in the previous analysis of sampling effects described [here](https://tbep-tech.github.io/wqtrends-synthesis/sampling-effects).  The goal is to create a "large" number of down-sampled datasets to assess the effect on chloropyll variation.  This differs from the previous analysis in two ways:
+This document evaluates the effect of down-sampling a long-term chlorophyll time series at station 30 in South Bay of the San Francisco Estuary. The methods herein build upon those in the previous analysis of sampling effects described [here](https://tbep-tech.github.io/wqtrends-synthesis/sampling-effects).  The goal is to create a "large" number of down-sampled datasets to assess the effect on chlorophyll variation given that varying effort has occurred throughout the time series.  This differs from the previous analysis in two ways:
 
 1. The previous analysis only evaluated five random down-sampled subsets, here we evaluate 1000. 
-1. The previous anlaysis evalutaed changed in trend estimates as the the maxium chlorophyll peak using methods in the [wqtrends](https://tbep-tech.github.io/wqtrends/) package, here we only evaluate changes in chlorophyll variance, 
-
-Further, only the down-sampling that evaluates equal effort between all months and years is used.  
+1. The previous analysis evaluated changes in trend estimates as the the maximum chlorophyll peak using methods in the [wqtrends](https://tbep-tech.github.io/wqtrends/) package, here we only evaluate changes in chlorophyll variance. 
+1. Only the down-sampling that evaluates equal effort between all months and years is used.  The previous analysis also evaluated equal sampling between year groups, where effort still varied between month.
 
 # Methods
 
@@ -77,7 +76,7 @@ chldat <- chldat %>%
   )
 ```
 
-The down-sampling function is created. 
+The down-sampling function is created for equal effort between months. 
 
 ```{r}
 downsamp_fun1 <- function(datin){
@@ -105,7 +104,7 @@ downsamp_fun1 <- function(datin){
 }
 ```
 
-The down-sampled datasets are created. 
+The down-sampled datasets are created, taking 1000 random datasets. 
 
 ```{r}
 rnds <- paste('Equal month', 1:1000)
@@ -207,15 +206,15 @@ actest <- chldat %>%
 head(actest)
 ```
 
-Then the two can be compared to see how down-sampling effects the estimated variance compared to the actual dataset. 
+Then the two can be compared to see how chlorophyll could potentially vary depending on sample design, i.e., what is the estimated variance considering equal sample effort across the time series relative to the actual variance with unequal sampling across the time series. 
 
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
 ggplot(dwnest, aes(x = yr, y = medvar, group = yr)) + 
-  geom_point(aes(col = 'Estimated')) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated'), width = 0) +
-  geom_point(data = actest, aes(y = varchl, col = 'Actual')) +
+  geom_point(aes(col = 'Estimated (equal effort)')) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
+  geom_point(data = actest, aes(y = varchl, col = 'Actual (unequal effort)')) +
   scale_color_manual(values = c('black', 'red')) +
   scale_y_log10() + 
   guides(linetype = guide_legend(override.aes = list(linetype = 0)), 

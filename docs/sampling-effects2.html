@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dr.&nbsp;Marcus Beck, mbeck@tbep.org">
-<meta name="dcterms.date" content="2022-08-16">
+<meta name="dcterms.date" content="2022-08-22">
 
 <title>Exploratory analysis of sampling effect on trend estimates in South Bay, Pt 2</title>
 <style>
@@ -108,7 +108,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Exploratory analysis of sampling effect on trend estimates in South Bay, Pt 2</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source" data-quarto-source-url="https://github.com/tbep-tech/wqtrends-synthesis/docs/sampling-effects2.qmd"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Exploratory analysis of sampling effect on trend estimates in South Bay, Pt 2</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source" data-quarto-source-url="https://github.com/tbep-tech/wqtrends-synthesis/blob/main/docs/sampling-effects2.qmd"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -125,7 +125,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 16, 2022</p>
+      <p class="date">August 22, 2022</p>
     </div>
   </div>
     
@@ -136,12 +136,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <section id="overview" class="level1">
 <h1>Overview</h1>
-<p>This document evaluates the effect of down-sampling a long-term chlorophyll time series at station 30 in South Bay of the San Francisco Estuary. The methods herein build upon those in the previous analysis of sampling effects described <a href="https://tbep-tech.github.io/wqtrends-synthesis/sampling-effects">here</a>. The goal is to create a “large” number of down-sampled datasets to assess the effect on chloropyll variation. This differs from the previous analysis in two ways:</p>
+<p>This document evaluates the effect of down-sampling a long-term chlorophyll time series at station 30 in South Bay of the San Francisco Estuary. The methods herein build upon those in the previous analysis of sampling effects described <a href="https://tbep-tech.github.io/wqtrends-synthesis/sampling-effects">here</a>. The goal is to create a “large” number of down-sampled datasets to assess the effect on chlorophyll variation given that varying effort has occurred throughout the time series. This differs from the previous analysis in two ways:</p>
 <ol type="1">
 <li>The previous analysis only evaluated five random down-sampled subsets, here we evaluate 1000.</li>
-<li>The previous anlaysis evalutaed changed in trend estimates as the the maxium chlorophyll peak using methods in the <a href="https://tbep-tech.github.io/wqtrends/">wqtrends</a> package, here we only evaluate changes in chlorophyll variance,</li>
+<li>The previous analysis evaluated changes in trend estimates as the the maximum chlorophyll peak using methods in the <a href="https://tbep-tech.github.io/wqtrends/">wqtrends</a> package, here we only evaluate changes in chlorophyll variance.</li>
+<li>Only the down-sampling that evaluates equal effort between all months and years is used. The previous analysis also evaluated equal sampling between year groups, where effort still varied between month.</li>
 </ol>
-<p>Further, only the down-sampling that evaluates equal effort between all months and years is used.</p>
 </section>
 <section id="methods" class="level1">
 <h1>Methods</h1>
@@ -189,7 +189,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">seas =</span> <span class="fu">factor</span>(seas, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'Feb 1 - Apr 30'</span>, <span class="st">'Aug 1 - Oct 31'</span>))</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The down-sampling function is created.</p>
+<p>The down-sampling function is created for equal effort between months.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>downsamp_fun1 <span class="ot">&lt;-</span> <span class="cf">function</span>(datin){</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -215,7 +215,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The down-sampled datasets are created.</p>
+<p>The down-sampled datasets are created, taking 1000 random datasets.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rnds <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">'Equal month'</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -311,12 +311,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code># A tibble: 6 x 4
      yr  medvar   loest  hiest
   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
-1  1978   0.704  0.0730   8.09
-2  1979  69.0    0.177  153.  
-3  1980   1.17   0.132  137.  
-4  1981  19.1    0.0633  39.6 
-5  1982  57.4   11.9    185.  
-6  1983 108.     6.61   300.  </code></pre>
+1  1978   0.752  0.0797   8.35
+2  1979  61.4    0.19   157.  
+3  1980   1.18   0.119  136.  
+4  1981  19.2    0.0450  38.7 
+5  1982  58.1   10.4    187.  
+6  1983 110.     6.20   296.  </code></pre>
 </div>
 </div>
 <p>The same is done for the actual dataset for comparison.</p>
@@ -337,12 +337,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 6  1983 176.  </code></pre>
 </div>
 </div>
-<p>Then the two can be compared to see how down-sampling effects the estimated variance compared to the actual dataset.</p>
+<p>Then the two can be compared to see how chlorophyll could potentially vary depending on sample design, i.e., what is the estimated variance considering equal sample effort across the time series relative to the actual variance with unequal sampling across the time series.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dwnest, <span class="fu">aes</span>(<span class="at">x =</span> yr, <span class="at">y =</span> medvar, <span class="at">group =</span> yr)) <span class="sc">+</span> </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated'</span>)) <span class="sc">+</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated'</span>), <span class="at">width =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actest, <span class="fu">aes</span>(<span class="at">y =</span> varchl, <span class="at">col =</span> <span class="st">'Actual'</span>)) <span class="sc">+</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>)) <span class="sc">+</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actest, <span class="fu">aes</span>(<span class="at">y =</span> varchl, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>)) <span class="sc">+</span></span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'black'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>)), </span>
@@ -517,7 +517,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","descPosition":"bottom","closeEffect":"zoom","openEffect":"zoom","loop":true});</script>
+<script>var lightboxQuarto = GLightbox({"descPosition":"bottom","closeEffect":"zoom","loop":true,"selector":".lightbox","openEffect":"zoom"});</script>
 
 
 
