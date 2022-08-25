@@ -49,8 +49,8 @@ delims <- unique(year(chldat$date)) %>%
 chldat <- chldat %>% 
   mutate(
     yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
-    qrt = quarter(date),
-    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('JFM', 'AMJ', 'JAS', 'OND')),
+    qrt = quarter(date, fiscal_start = 2),
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ')),
     seas = case_when(
       mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
       mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
@@ -214,8 +214,8 @@ show_prdseries(modsmp2, ylab = 'log-Chl-a') + labs(subtitle = '(c) Down-sampled,
 We can test the trends in each quarter and year period for each model as follows. 
 
 ```{r}
-cmptrnd_fun <- function(..., delims, doystr = c(1, 91, 182, 274), doyend = c(90, 181, 273, 364), 
-                        seas = c('JFM', 'AMJ', 'JAS', 'OND')){
+cmptrnd_fun <- function(..., delims, doystr = c(32, 121, 213, 305), doyend = c(120, 212, 304, 31), 
+                        seas = c('FMA', 'MJJ', 'ASO', 'NDJ')){
 
   delim <- length(delims) - 1
   yrstr <- delims[1:delim]
@@ -474,7 +474,7 @@ cmb <- smpests %>%
     mixmet = purrr::map(data, function(x) mixmeta::mixmeta(met ~ 1, S = se, random = ~1|chlsmp, data = x, method = 'reml')), 
     met = purrr::map(mixmet, function(x) summary(x)$coefficients[1]),
     se = purrr::map(mixmet, function(x) summary(x)$coefficients[2])
-  ) cmb %>% 
+  ) %>% 
   select(yr, met, se) %>% 
   unnest(cols = c('met', 'se')) %>% 
   mutate(

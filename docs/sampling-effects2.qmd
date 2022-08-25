@@ -65,8 +65,8 @@ delims <- unique(year(tiddat$date)) %>%
 chldat <- chldat %>% 
   mutate(
     yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
-    qrt = quarter(date),
-    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('JFM', 'AMJ', 'JAS', 'OND')),
+    qrt = quarter(date, fiscal_start = 2),
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ')),
     seas = case_when(
       mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
       mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
@@ -230,7 +230,7 @@ ggplot(dwnest, aes(x = yr, y = medvar, group = yr)) +
   )
 ```
 
-The same summaries are shown below, but grouped by month, quarter, and season.
+The same summaries are shown below, but grouped by month, quarter, and season for different annual periods.
 
 ```{r}
 #| fig-width: 8
@@ -241,19 +241,19 @@ dwnest <- ests %>%
   mutate(
     datamo = purrr::map(data, function(x){
       x %>% 
-        group_by(mo) %>% 
-        summarise(varchl = var(value, na.rm = T))
+        group_by(yrgrp, mo) %>% 
+        summarise(varchl = var(value, na.rm = T), .groups = 'drop')
     }), 
     dataqrt = purrr::map(data, function(x){
       x %>% 
-        group_by(qrt) %>% 
-        summarise(varchl = var(value, na.rm = T))
+        group_by(yrgrp, qrt) %>% 
+        summarise(varchl = var(value, na.rm = T), .groups = 'drop')
     }),
     dataseas = purrr::map(data, function(x){
       x %>% 
         filter(!is.na(seas)) %>% 
-        group_by(seas) %>% 
-        summarise(varchl = var(value, na.rm = T))
+        group_by(yrgrp, seas) %>% 
+        summarise(varchl = var(value, na.rm = T), .groups = 'drop')
     })
   ) 
  
@@ -261,49 +261,56 @@ dwnest <- ests %>%
 dwnmo <- dwnest %>% 
   select(chlsmp, datamo) %>% 
   unnest('datamo') %>% 
-  group_by(mo) %>% 
+  group_by(yrgrp, mo) %>% 
   summarise(
     medvar = median(varchl, na.rm = T), 
     loest = quantile(varchl, probs = 0.05, na.rm = T),
-    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+    hiest = quantile(varchl, probs = 0.95, na.rm = T),
+    .groups = 'drop'
   )
 dwnqrt <- dwnest %>% 
   select(chlsmp, dataqrt) %>% 
   unnest('dataqrt') %>% 
-  group_by(qrt) %>% 
+  group_by(yrgrp, qrt) %>% 
   summarise(
     medvar = median(varchl, na.rm = T), 
     loest = quantile(varchl, probs = 0.05, na.rm = T),
-    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+    hiest = quantile(varchl, probs = 0.95, na.rm = T),
+    .groups = 'drop'
   )
 dwnseas <- dwnest %>% 
   select(chlsmp, dataseas) %>% 
   unnest('dataseas') %>% 
-  group_by(seas) %>% 
+  group_by(yrgrp, seas) %>% 
   summarise(
     medvar = median(varchl, na.rm = T), 
     loest = quantile(varchl, probs = 0.05, na.rm = T),
-    hiest = quantile(varchl, probs = 0.95, na.rm = T)
+    hiest = quantile(varchl, probs = 0.95, na.rm = T),
+    .groups = 'drop'
   )
 
 # get the actual variance for month, quarter, and season
 actmo <- chldat %>%  
-  group_by(mo) %>% 
+  group_by(yrgrp, mo) %>% 
   summarise(
-    medvar = var(value, na.rm = T)
+    medvar = var(value, na.rm = T),
+    .groups = 'drop'
   )
 actqrt <- chldat %>%  
-  group_by(qrt) %>% 
+  group_by(yrgrp, qrt) %>% 
   summarise(
-    medvar = var(value, na.rm = T)
+    medvar = var(value, na.rm = T),
+    .groups = 'drop'
   )
 actseas <- chldat %>%  
   filter(!is.na(seas)) %>% 
-  group_by(seas) %>% 
+  group_by(yrgrp, seas) %>% 
   summarise(
-    medvar = var(value, na.rm = T)
+    medvar = var(value, na.rm = T),
+    .groups = 'drop'
   )
 
+wd <- 0.5
 # create the plot
 p1 <- ggplot(dwnmo, aes(x = mo, y = medvar, group = mo)) + 
   geom_point(aes(col = 'Estimated (equal effort)')) +
@@ -319,10 +326,10 @@ p1 <- ggplot(dwnmo, aes(x = mo, y = medvar, group = mo)) +
     color = NULL
   )
 
-p2 <- ggplot(dwnqrt, aes(x = qrt, y = medvar, group = qrt)) + 
-  geom_point(aes(col = 'Estimated (equal effort)')) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
-  geom_point(data = actqrt, aes(y = medvar, col = 'Actual (unequal effort)')) +
+p2 <- ggplot(dwnqrt, aes(x = qrt, y = medvar, group = yrgrp)) + 
+  geom_point(aes(col = 'Estimated (equal effort)'), position = position_dodge(width = wd)) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = position_dodge(width = wd)) +
+  geom_point(data = actqrt, aes(y = medvar, col = 'Actual (unequal effort)', group = yrgrp), position = position_dodge(width = wd)) +
   scale_color_manual(values = c('black', 'red')) +
   scale_y_log10() + 
   guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
