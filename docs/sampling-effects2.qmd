@@ -310,54 +310,61 @@ actseas <- chldat %>%
     .groups = 'drop'
   )
 
-wd <- 0.5
+
+ddg <- position_dodge(width = 0.5)
 # create the plot
-p1 <- ggplot(dwnmo, aes(x = mo, y = medvar, group = mo)) + 
-  geom_point(aes(col = 'Estimated (equal effort)')) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
-  geom_point(data = actmo, aes(y = medvar, col = 'Actual (unequal effort)')) +
-  scale_color_manual(values = c('black', 'red')) +
+p1 <- ggplot(dwnmo, aes(x = mo, y = medvar, group = yrgrp)) + 
+  geom_point(aes(col = 'Estimated (equal effort)', shape = yrgrp), position = ddg, size = 3) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = ddg) +
+  geom_point(data = actmo, aes(y = medvar, col = 'Actual (unequal effort)', shape = yrgrp), position = ddg, size = 3) +
+  scale_color_manual(values = c('cyan4', 'red')) +
   scale_y_log10() + 
-  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
-         color = guide_legend(override.aes = list(linetype = 0))) +
+  guides(linetype = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5)), 
+         color = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5))) +
   labs(
     x = NULL, 
     y = 'Chl-a variance', 
-    color = NULL
+    color = 'Sample type', 
+    shape = 'Year period'
   )
 
 p2 <- ggplot(dwnqrt, aes(x = qrt, y = medvar, group = yrgrp)) + 
-  geom_point(aes(col = 'Estimated (equal effort)'), position = position_dodge(width = wd)) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = position_dodge(width = wd)) +
-  geom_point(data = actqrt, aes(y = medvar, col = 'Actual (unequal effort)', group = yrgrp), position = position_dodge(width = wd)) +
-  scale_color_manual(values = c('black', 'red')) +
+  geom_point(aes(col = 'Estimated (equal effort)', shape = yrgrp), position = ddg, 
+             size = 3) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = ddg) +
+  geom_point(data = actqrt, aes(y = medvar, col = 'Actual (unequal effort)', group = yrgrp, shape = yrgrp), position = ddg, size = 3) +
+  scale_color_manual(values = c('cyan4', 'red')) +
   scale_y_log10() + 
-  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
-         color = guide_legend(override.aes = list(linetype = 0))) +
+  guides(linetype = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5)), 
+         color = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5))) +
   labs(
     x = NULL, 
     y = 'Chl-a variance', 
-    color = NULL
+    color = 'Sample type', 
+    shape = 'Year period'
   )
 
-p3 <- ggplot(dwnseas, aes(x = seas, y = medvar, group = seas)) + 
-  geom_point(aes(col = 'Estimated (equal effort)')) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0) +
-  geom_point(data = actseas, aes(y = medvar, col = 'Actual (unequal effort)')) +
-  scale_color_manual(values = c('black', 'red')) +
+p3 <- ggplot(dwnseas, aes(x = seas, y = medvar, group = yrgrp)) + 
+  geom_point(aes(col = 'Estimated (equal effort)', shape = yrgrp), size = 3, position = ddg) +
+  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = ddg) +
+  geom_point(data = actseas, aes(y = medvar, col = 'Actual (unequal effort)', shape = yrgrp), size = 3, position = ddg) +
+  scale_color_manual(values = c('cyan4', 'red')) +
   scale_y_log10() + 
-  guides(linetype = guide_legend(override.aes = list(linetype = 0)), 
-         color = guide_legend(override.aes = list(linetype = 0))) +
+  guides(linetype = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5)), 
+         color = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5))) +
   labs(
     x = NULL, 
     y = 'Chl-a variance', 
-    color = NULL
+    color = 'Sample type', 
+    shape = 'Year period'
   )
+
 
 p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect') & 
   theme_bw() + 
   theme(
-    legend.position = 'top'
+    legend.position = 'top', 
+    legend.box = 'vertical'
   ) 
 ```
 
