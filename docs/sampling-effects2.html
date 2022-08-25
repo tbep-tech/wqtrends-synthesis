@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.0.36">
+<meta name="generator" content="quarto-1.0.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -176,18 +176,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="dv">0</span>)</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># add temporal groupings to chldat </span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>chldat <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span> </span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">yrgrp =</span> <span class="fu">cut</span>(yr, <span class="at">breaks =</span> delims, <span class="at">include.lowest =</span> T, <span class="at">right =</span> F, <span class="at">dig.lab =</span> <span class="dv">4</span>), </span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">qrt =</span> <span class="fu">quarter</span>(date, <span class="at">fiscal_start =</span> <span class="dv">2</span>),</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">qrt =</span> <span class="fu">factor</span>(qrt, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'1'</span>, <span class="st">'2'</span>, <span class="st">'3'</span>, <span class="st">'4'</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">'FMA'</span>, <span class="st">'MJJ'</span>, <span class="st">'ASO'</span>, <span class="st">'NDJ'</span>)),</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">seas =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>      mo <span class="sc">%in%</span>  <span class="fu">c</span>(<span class="st">'Feb'</span>, <span class="st">'Mar'</span>, <span class="st">'Apr'</span>) <span class="sc">~</span> <span class="st">'Feb 1 - Apr 30'</span>, </span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>      mo <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'Aug'</span>, <span class="st">'Sep'</span>, <span class="st">'Oct'</span>) <span class="sc">~</span> <span class="st">'Aug 1 - Oct 31'</span>, </span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>      T <span class="sc">~</span> <span class="cn">NA_character_</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    ), </span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">seas =</span> <span class="fu">factor</span>(seas, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'Feb 1 - Apr 30'</span>, <span class="st">'Aug 1 - Oct 31'</span>))</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># add temporal groupings to chldat </span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>chldat <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span> </span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">doy =</span> <span class="fu">yday</span>(date <span class="sc">-</span> <span class="dv">31</span>),</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">yr =</span> <span class="fu">ifelse</span>(mo <span class="sc">==</span> <span class="st">'Jan'</span>, yr <span class="sc">-</span> <span class="dv">1</span>, yr),</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">yrgrp =</span> <span class="fu">cut</span>(yr, <span class="at">breaks =</span> delims, <span class="at">include.lowest =</span> T, <span class="at">right =</span> F, <span class="at">dig.lab =</span> <span class="dv">4</span>), </span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">qrt =</span> <span class="fu">quarter</span>(date, <span class="at">fiscal_start =</span> <span class="dv">2</span>),</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">qrt =</span> <span class="fu">factor</span>(qrt, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'1'</span>, <span class="st">'2'</span>, <span class="st">'3'</span>, <span class="st">'4'</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">'FMA'</span>, <span class="st">'MJJ'</span>, <span class="st">'ASO'</span>, <span class="st">'NDJ'</span>))</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(yr <span class="sc">&gt;</span> <span class="dv">1977</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The down-sampling function is created for equal effort between months.</p>
 <div class="cell">
@@ -252,20 +250,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="st">'Observations'</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  p3 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(toplo[<span class="sc">!</span><span class="fu">is.na</span>(toplo<span class="sc">$</span>seas),], <span class="fu">aes</span>(<span class="at">x =</span> seas, <span class="at">group =</span> yrgrp, <span class="at">fill =</span> yrgrp)) <span class="sc">+</span> </span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_bar</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(), <span class="at">color =</span> <span class="st">'black'</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span> </span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">fill =</span> <span class="st">'Year group'</span>, </span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="cn">NULL</span> ,</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="st">'Observations'</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p1 <span class="sc">+</span> p2 <span class="sc">+</span> p3 <span class="sc">+</span> <span class="fu">plot_layout</span>(<span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">guides =</span> <span class="st">'collect'</span>)</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(p)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p1 <span class="sc">+</span> p2 <span class="sc">+</span> <span class="fu">plot_layout</span>(<span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">guides =</span> <span class="st">'collect'</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(p)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Plot of sample effort for the original dataset:</p>
 <div class="cell">
@@ -309,14 +298,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dwnest)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 x 4
-     yr  medvar   loest  hiest
-  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
-1  1978   0.690  0.0845   8.38
-2  1979   8.55   0.188  155.  
-3  1980   1.20   0.138  138.  
-4  1981  19.7    0.0450  38.7 
-5  1982  60.1   13.1    187.  
-6  1983 106.     6.02   299.  </code></pre>
+     yr medvar  loest  hiest
+  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+1  1978   0.78  0.152   8.77
+2  1979   7.59  0.164 127.  
+3  1980   2.36  0.179 176.  
+4  1981  12.7   0.125  22.2 
+5  1982  69.4  12.5   210.  
+6  1983 104.    6.80  296.  </code></pre>
 </div>
 </div>
 <p>The same is done for the actual dataset for comparison.</p>
@@ -329,12 +318,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code># A tibble: 6 x 2
      yr varchl
   &lt;dbl&gt;  &lt;dbl&gt;
-1  1978   3.88
-2  1979  48.4 
-3  1980  61.8 
-4  1981  17.3 
-5  1982 107.  
-6  1983 176.  </code></pre>
+1  1978   3.94
+2  1979  45.0 
+3  1980  68.0 
+4  1981  16.0 
+5  1982 111.  
+6  1983 173.  </code></pre>
 </div>
 </div>
 <p>Then the two can be compared to see how chlorophyll could potentially vary depending on sample design, i.e., what is the estimated variance considering equal sample effort across the time series relative to the actual variance with unequal sampling across the time series.</p>
@@ -378,124 +367,84 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      x <span class="sc">%&gt;%</span> </span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">group_by</span>(yrgrp, qrt) <span class="sc">%&gt;%</span> </span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">summarise</span>(<span class="at">varchl =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T), <span class="at">.groups =</span> <span class="st">'drop'</span>)</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    }),</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">dataseas =</span> purrr<span class="sc">::</span><span class="fu">map</span>(data, <span class="cf">function</span>(x){</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      x <span class="sc">%&gt;%</span> </span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(seas)) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">group_by</span>(yrgrp, seas) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        <span class="fu">summarise</span>(<span class="at">varchl =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T), <span class="at">.groups =</span> <span class="st">'drop'</span>)</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  ) </span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co"># get variance ranges across sub-samples for month, quarter, season</span></span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>dwnmo <span class="ot">&lt;-</span> dwnest <span class="sc">%&gt;%</span> </span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chlsmp, datamo) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="st">'datamo'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, mo) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">median</span>(varchl, <span class="at">na.rm =</span> T), </span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">loest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.05</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">hiest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.95</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>dwnqrt <span class="ot">&lt;-</span> dwnest <span class="sc">%&gt;%</span> </span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chlsmp, dataqrt) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="st">'dataqrt'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, qrt) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">median</span>(varchl, <span class="at">na.rm =</span> T), </span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">loest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.05</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">hiest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.95</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>dwnseas <span class="ot">&lt;-</span> dwnest <span class="sc">%&gt;%</span> </span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chlsmp, dataseas) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="st">'dataseas'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, seas) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="co"># get variance ranges across sub-samples for month, quarter, season</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>dwnmo <span class="ot">&lt;-</span> dwnest <span class="sc">%&gt;%</span> </span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chlsmp, datamo) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="st">'datamo'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, mo) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">median</span>(varchl, <span class="at">na.rm =</span> T), </span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">loest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.05</span>, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">hiest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.95</span>, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>dwnqrt <span class="ot">&lt;-</span> dwnest <span class="sc">%&gt;%</span> </span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chlsmp, dataqrt) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="st">'dataqrt'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, qrt) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">median</span>(varchl, <span class="at">na.rm =</span> T), </span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">loest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.05</span>, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">hiest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.95</span>, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="co"># get the actual variance for month, quarter</span></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>actmo <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span>  </span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, mo) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>actqrt <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span>  </span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, qrt) <span class="sc">%&gt;%</span> </span>
 <span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">median</span>(varchl, <span class="at">na.rm =</span> T), </span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">loest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.05</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">hiest =</span> <span class="fu">quantile</span>(varchl, <span class="at">probs =</span> <span class="fl">0.95</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a><span class="co"># get the actual variance for month, quarter, and season</span></span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>actmo <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span>  </span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, mo) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>actqrt <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span>  </span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, qrt) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>actseas <span class="ot">&lt;-</span> chldat <span class="sc">%&gt;%</span>  </span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(seas)) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(yrgrp, seas) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T),</span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>ddg <span class="ot">&lt;-</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)</span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a><span class="co"># create the plot</span></span>
-<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dwnmo, <span class="fu">aes</span>(<span class="at">x =</span> mo, <span class="at">y =</span> medvar, <span class="at">group =</span> yrgrp)) <span class="sc">+</span> </span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actmo, <span class="fu">aes</span>(<span class="at">y =</span> medvar, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'cyan4'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
-<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>)), </span>
-<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>))) <span class="sc">+</span></span>
-<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, </span>
-<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">'Chl-a variance'</span>, </span>
-<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">'Sample type'</span>, </span>
-<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="st">'Year period'</span></span>
-<span id="cb12-91"><a href="#cb12-91" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-92"><a href="#cb12-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-93"><a href="#cb12-93" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dwnqrt, <span class="fu">aes</span>(<span class="at">x =</span> qrt, <span class="at">y =</span> medvar, <span class="at">group =</span> yrgrp)) <span class="sc">+</span> </span>
-<span id="cb12-94"><a href="#cb12-94" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, </span>
-<span id="cb12-95"><a href="#cb12-95" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb12-96"><a href="#cb12-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
-<span id="cb12-97"><a href="#cb12-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actqrt, <span class="fu">aes</span>(<span class="at">y =</span> medvar, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>, <span class="at">group =</span> yrgrp, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb12-98"><a href="#cb12-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'cyan4'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
-<span id="cb12-99"><a href="#cb12-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
-<span id="cb12-100"><a href="#cb12-100" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>)), </span>
-<span id="cb12-101"><a href="#cb12-101" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>))) <span class="sc">+</span></span>
-<span id="cb12-102"><a href="#cb12-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb12-103"><a href="#cb12-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, </span>
-<span id="cb12-104"><a href="#cb12-104" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">'Chl-a variance'</span>, </span>
-<span id="cb12-105"><a href="#cb12-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">'Sample type'</span>, </span>
-<span id="cb12-106"><a href="#cb12-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="st">'Year period'</span></span>
-<span id="cb12-107"><a href="#cb12-107" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-108"><a href="#cb12-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-109"><a href="#cb12-109" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dwnseas, <span class="fu">aes</span>(<span class="at">x =</span> seas, <span class="at">y =</span> medvar, <span class="at">group =</span> yrgrp)) <span class="sc">+</span> </span>
-<span id="cb12-110"><a href="#cb12-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
-<span id="cb12-111"><a href="#cb12-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
-<span id="cb12-112"><a href="#cb12-112" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actseas, <span class="fu">aes</span>(<span class="at">y =</span> medvar, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
-<span id="cb12-113"><a href="#cb12-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'cyan4'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
-<span id="cb12-114"><a href="#cb12-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
-<span id="cb12-115"><a href="#cb12-115" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>)), </span>
-<span id="cb12-116"><a href="#cb12-116" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>))) <span class="sc">+</span></span>
-<span id="cb12-117"><a href="#cb12-117" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb12-118"><a href="#cb12-118" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, </span>
-<span id="cb12-119"><a href="#cb12-119" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">'Chl-a variance'</span>, </span>
-<span id="cb12-120"><a href="#cb12-120" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">'Sample type'</span>, </span>
-<span id="cb12-121"><a href="#cb12-121" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="st">'Year period'</span></span>
-<span id="cb12-122"><a href="#cb12-122" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-123"><a href="#cb12-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-124"><a href="#cb12-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-125"><a href="#cb12-125" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2 <span class="sc">+</span> p3 <span class="sc">+</span> <span class="fu">plot_layout</span>(<span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">guides =</span> <span class="st">'collect'</span>) <span class="sc">&amp;</span> </span>
-<span id="cb12-126"><a href="#cb12-126" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span> </span>
-<span id="cb12-127"><a href="#cb12-127" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb12-128"><a href="#cb12-128" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">'top'</span>, </span>
-<span id="cb12-129"><a href="#cb12-129" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.box =</span> <span class="st">'vertical'</span></span>
-<span id="cb12-130"><a href="#cb12-130" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">medvar =</span> <span class="fu">var</span>(value, <span class="at">na.rm =</span> T),</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>ddg <span class="ot">&lt;-</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)</span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a><span class="co"># create the plot</span></span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dwnmo, <span class="fu">aes</span>(<span class="at">x =</span> mo, <span class="at">y =</span> medvar, <span class="at">group =</span> yrgrp)) <span class="sc">+</span> </span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actmo, <span class="fu">aes</span>(<span class="at">y =</span> medvar, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'cyan4'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>)), </span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>))) <span class="sc">+</span></span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, </span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">'Chl-a variance'</span>, </span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">'Sample type'</span>, </span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="st">'Year period'</span></span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(dwnqrt, <span class="fu">aes</span>(<span class="at">x =</span> qrt, <span class="at">y =</span> medvar, <span class="at">group =</span> yrgrp)) <span class="sc">+</span> </span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, </span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> loest, <span class="at">ymax =</span> hiest, <span class="at">col =</span> <span class="st">'Estimated (equal effort)'</span>), <span class="at">width =</span> <span class="dv">0</span>, <span class="at">position =</span> ddg) <span class="sc">+</span></span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> actqrt, <span class="fu">aes</span>(<span class="at">y =</span> medvar, <span class="at">col =</span> <span class="st">'Actual (unequal effort)'</span>, <span class="at">group =</span> yrgrp, <span class="at">shape =</span> yrgrp), <span class="at">position =</span> ddg, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">'cyan4'</span>, <span class="st">'red'</span>)) <span class="sc">+</span></span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">linetype =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>)), </span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">linetype =</span> <span class="dv">0</span>, <span class="at">shape =</span> <span class="dv">15</span>, <span class="at">size =</span> <span class="dv">5</span>))) <span class="sc">+</span></span>
+<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, </span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">'Chl-a variance'</span>, </span>
+<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">'Sample type'</span>, </span>
+<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="st">'Year period'</span></span>
+<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2 <span class="sc">+</span> <span class="fu">plot_layout</span>(<span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">guides =</span> <span class="st">'collect'</span>) <span class="sc">&amp;</span> </span>
+<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span> </span>
+<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">'top'</span>, </span>
+<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.box =</span> <span class="st">'vertical'</span></span>
+<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -657,7 +606,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"descPosition":"bottom","openEffect":"zoom","closeEffect":"zoom","loop":true,"selector":".lightbox"});</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","openEffect":"zoom","selector":".lightbox","loop":true});</script>
 
 
 

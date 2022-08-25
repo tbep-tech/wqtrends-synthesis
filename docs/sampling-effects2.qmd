@@ -62,18 +62,16 @@ delims <- unique(year(tiddat$date)) %>%
   round(0)
 
 # add temporal groupings to chldat 
+# add temporal groupings to chldat 
 chldat <- chldat %>% 
   mutate(
+    doy = yday(date - 31),
+    yr = ifelse(mo == 'Jan', yr - 1, yr),
     yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
     qrt = quarter(date, fiscal_start = 2),
-    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ')),
-    seas = case_when(
-      mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
-      mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
-      T ~ NA_character_
-    ), 
-    seas = factor(seas, levels = c('Feb 1 - Apr 30', 'Aug 1 - Oct 31'))
-  )
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ'))
+  ) %>% 
+  filter(yr > 1977)
 ```
 
 The down-sampling function is created for equal effort between months. 
@@ -144,16 +142,7 @@ smpeff_plo <- function(datin){
       y = 'Observations'
     )
   
-  p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
-    geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
-    theme_minimal() + 
-    labs(
-      fill = 'Year group', 
-      x = NULL ,
-      y = 'Observations'
-    )
-  
-  p <- p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+  p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect')
   
   return(p)
   
@@ -164,7 +153,7 @@ Plot of sample effort for the original dataset:
 
 ```{r}
 #| fig-width: 8
-#| fig-height: 8
+#| fig-height: 6
 smpeff_plo(chldat)
 ```
 
@@ -172,7 +161,7 @@ Plot of sample effort for one of the down-sampled datasets:
 
 ```{r}
 #| fig-width: 8
-#| fig-height: 8
+#| fig-height: 6
 smpeff_plo(ests$data[[1]])
 ```
 
@@ -234,7 +223,7 @@ The same summaries are shown below, but grouped by month, quarter, and season fo
 
 ```{r}
 #| fig-width: 8
-#| fig-height: 8
+#| fig-height: 6
 
 # summarize down-sampled variance by month, quarter, season
 dwnest <- ests %>% 
@@ -247,12 +236,6 @@ dwnest <- ests %>%
     dataqrt = purrr::map(data, function(x){
       x %>% 
         group_by(yrgrp, qrt) %>% 
-        summarise(varchl = var(value, na.rm = T), .groups = 'drop')
-    }),
-    dataseas = purrr::map(data, function(x){
-      x %>% 
-        filter(!is.na(seas)) %>% 
-        group_by(yrgrp, seas) %>% 
         summarise(varchl = var(value, na.rm = T), .groups = 'drop')
     })
   ) 
@@ -278,18 +261,8 @@ dwnqrt <- dwnest %>%
     hiest = quantile(varchl, probs = 0.95, na.rm = T),
     .groups = 'drop'
   )
-dwnseas <- dwnest %>% 
-  select(chlsmp, dataseas) %>% 
-  unnest('dataseas') %>% 
-  group_by(yrgrp, seas) %>% 
-  summarise(
-    medvar = median(varchl, na.rm = T), 
-    loest = quantile(varchl, probs = 0.05, na.rm = T),
-    hiest = quantile(varchl, probs = 0.95, na.rm = T),
-    .groups = 'drop'
-  )
 
-# get the actual variance for month, quarter, and season
+# get the actual variance for month, quarter
 actmo <- chldat %>%  
   group_by(yrgrp, mo) %>% 
   summarise(
@@ -302,14 +275,6 @@ actqrt <- chldat %>%
     medvar = var(value, na.rm = T),
     .groups = 'drop'
   )
-actseas <- chldat %>%  
-  filter(!is.na(seas)) %>% 
-  group_by(yrgrp, seas) %>% 
-  summarise(
-    medvar = var(value, na.rm = T),
-    .groups = 'drop'
-  )
-
 
 ddg <- position_dodge(width = 0.5)
 # create the plot
@@ -344,23 +309,7 @@ p2 <- ggplot(dwnqrt, aes(x = qrt, y = medvar, group = yrgrp)) +
     shape = 'Year period'
   )
 
-p3 <- ggplot(dwnseas, aes(x = seas, y = medvar, group = yrgrp)) + 
-  geom_point(aes(col = 'Estimated (equal effort)', shape = yrgrp), size = 3, position = ddg) +
-  geom_errorbar(aes(ymin = loest, ymax = hiest, col = 'Estimated (equal effort)'), width = 0, position = ddg) +
-  geom_point(data = actseas, aes(y = medvar, col = 'Actual (unequal effort)', shape = yrgrp), size = 3, position = ddg) +
-  scale_color_manual(values = c('cyan4', 'red')) +
-  scale_y_log10() + 
-  guides(linetype = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5)), 
-         color = guide_legend(override.aes = list(linetype = 0, shape = 15, size = 5))) +
-  labs(
-    x = NULL, 
-    y = 'Chl-a variance', 
-    color = 'Sample type', 
-    shape = 'Year period'
-  )
-
-
-p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect') & 
+p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & 
   theme_bw() + 
   theme(
     legend.position = 'top', 
