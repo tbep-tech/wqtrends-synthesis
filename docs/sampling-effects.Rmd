@@ -48,19 +48,16 @@ delims <- unique(year(chldat$date)) %>%
 # add temporal groupings to chldat 
 chldat <- chldat %>% 
   mutate(
+    doy = yday(date - 31),
+    yr = ifelse(mo == 'Jan', yr - 1, yr),
     yrgrp = cut(yr, breaks = delims, include.lowest = T, right = F, dig.lab = 4), 
     qrt = quarter(date, fiscal_start = 2),
-    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ')),
-    seas = case_when(
-      mo %in%  c('Feb', 'Mar', 'Apr') ~ 'Feb 1 - Apr 30', 
-      mo %in% c('Aug', 'Sep', 'Oct') ~ 'Aug 1 - Oct 31', 
-      T ~ NA_character_
-    ), 
-    seas = factor(seas, levels = c('Feb 1 - Apr 30', 'Aug 1 - Oct 31'))
-  )
+    qrt = factor(qrt, levels = c('1', '2', '3', '4'), labels = c('FMA', 'MJJ', 'ASO', 'NDJ'))
+  ) %>% 
+  filter(yr > 1977)
 ```
 
-This is the dataset that is evaluated.  Note the addition of different columns for temporal and seasonal groupings. 
+This is the dataset that is evaluated.  Note the addition of different columns for temporal and seasonal groupings. The `yr` and `doy` variables are offset by one month, where year starts on February to more closely follow the water year. 
 
 ```{r}
 head(chldat)
@@ -70,7 +67,7 @@ head(chldat)
   
 Here, it is shown how effort varied by month and seasonal groupings at station 30 for the approximate forty year period of record. 
 
-```{r, fig.height = 8, fig.width = 8}
+```{r, fig.height = 6, fig.width = 8}
 smpeff_plo <- function(datin){
 
   toplo <- datin 
@@ -93,16 +90,7 @@ smpeff_plo <- function(datin){
       y = 'Observations'
     )
   
-  p3 <- ggplot(toplo[!is.na(toplo$seas),], aes(x = seas, group = yrgrp, fill = yrgrp)) + 
-    geom_bar(position = position_dodge(), color = 'black', alpha = 0.7) + 
-    theme_minimal() + 
-    labs(
-      fill = 'Year group', 
-      x = NULL ,
-      y = 'Observations'
-    )
-  
-  p <- p1 + p2 + p3 + plot_layout(ncol = 1, guides = 'collect')
+  p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect')
   
   return(p)
   
@@ -155,7 +143,7 @@ chlsmp1 <- downsamp_fun1(chldat)
 
 Now, evaluating the counts in each temporal category as before shows that the down-sampled time series has a more equal distribution of samples for each month.
 
-```{r, fig.height = 8, fig.width = 8}
+```{r, fig.height = 6, fig.width = 8}
 smpeff_plo(chlsmp1)
 ```
 
@@ -214,7 +202,7 @@ show_prdseries(modsmp2, ylab = 'log-Chl-a') + labs(subtitle = '(c) Down-sampled,
 We can test the trends in each quarter and year period for each model as follows. 
 
 ```{r}
-cmptrnd_fun <- function(..., delims, doystr = c(32, 121, 213, 305), doyend = c(120, 212, 304, 31), 
+cmptrnd_fun <- function(..., delims, doystr = c(1, 91, 182, 274), doyend = c(90, 181, 273, 364), 
                         seas = c('FMA', 'MJJ', 'ASO', 'NDJ')){
 
   delim <- length(delims) - 1
@@ -335,13 +323,6 @@ cmptrnd_plo(cmptrnd)
 
 The results show that trend estimates are similar, but can vary quite a bit depending on sample frequency.  
 
-Differences in trend estimates for each sample design for the spring/fall bloom period can also be checked.
-
-```{r, fig.height = 3.5, fig.width = 7}
-cmptrnd <- cmptrnd_fun(modorig, modsmp1, modsmp2, delims = delims, doystr = c(32, 213), doyend = c(120, 304), seas = c('FMA', 'ASO'))
-cmptrnd_plo(cmptrnd)
-```
-
 ### Trends (again) on original and down-sampled
 
 Because the random sample varies for each down-sampled subset, the analysis is repeated. If the random sample has no effect, the results in the below plots should look similar to the previous plots. 
@@ -364,21 +345,14 @@ show_prdseries(modsmp1, ylab = 'log-Chl-a') + labs(subtitle = '(b) Down-sampled,
 show_prdseries(modsmp2, ylab = 'log-Chl-a') + labs(subtitle = '(c) Down-sampled, equal year group')
 ```
 
-First, the quarterly trends are compared.
+The quarterly trends are compared.
 
 ```{r, fig.height = 6, fig.width = 7}
 cmptrnd <- cmptrnd_fun(modorig, modsmp1, modsmp2, delims = delims)
 cmptrnd_plo(cmptrnd)
 ```
 
-Second, the spring/fall bloom period trends are compared. 
-
-```{r, fig.height = 3.5, fig.width = 7}
-cmptrnd <- cmptrnd_fun(modorig, modsmp1, modsmp2, delims = delims, doystr = c(32, 213), doyend = c(120, 304), seas = c('FMA', 'ASO'))
-cmptrnd_plo(cmptrnd)
-```
-
-The results are similar as above, with one difference for the quarterly comparisons. The trend for 1992 - 2005, JFM period is significant for the first random subsample, but not the second.  So, the random draw does not appear to substantially influence our conclusions.
+The results are similar as above, with a few differences.
 
 ## Evaluate effect on maximum peak estimates
 
@@ -396,13 +370,13 @@ ests <- tibble(chlsmp = rnds) %>%
     data = list(chldat), 
     data = purrr::map(data, downsamp_fun1), 
     mods = purrr::map(data, anlz_gam, trans = 'log10'),
-    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T)
+    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 1, doyend = 89, nsim = 1e4, na.rm = T)
   ) %>% 
   select(chlsmp, vals) %>% 
   unnest('vals')
 
 # get max seasonal estimates from full dataset
-origests <- anlz_metseason(modorig, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T) %>% 
+origests <- anlz_metseason(modorig, metfun = max, doystr = 1, doyend = 89, nsim = 1e4, na.rm = T) %>% 
   mutate(chlsmp = 'Full dataset')
 
 # combine all results
@@ -455,7 +429,7 @@ smpests <- tibble(chlsmp = rnds) %>%
     data = list(chldat), 
     data = purrr::map(data, downsamp_fun1), 
     mods = purrr::map(data, anlz_gam, trans = 'log10'),
-    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 32, doyend = 120, nsim = 1e4, na.rm = T)
+    vals = purrr::map(mods, anlz_metseason, metfun = max, doystr = 1, doyend = 89, nsim = 1e4, na.rm = T)
   ) %>% 
   select(chlsmp, vals) %>% 
   unnest('vals')
