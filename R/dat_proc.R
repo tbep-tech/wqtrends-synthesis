@@ -127,7 +127,7 @@ datprc <- datprc %>%
 # rawdat <- datprc
 # save(rawdat, file = '../wqtrends/data/rawdat.RData', compress = 'xz')
 
-save(datprc, file = here('data/datprc.RData'), compress = 'xz')
+save(datprc, file = here('data/datprc.RData'), compress = 'xz', version = 2)
 
 # save separate rdata model files for each station, parameter -------------
 
