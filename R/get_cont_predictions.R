@@ -15,7 +15,7 @@ outdir <- '~/Desktop'
 # data to model, same as datprc, params in wide format, nested by station
 # transformation assigned to parameter
 tomod <- datprc %>% 
-  filter(param %in% prm) %>% # add parameters here
+  filter(param %in% prm) %>% 
   mutate(
     trans = case_when(
       param %in% c('chl', 'gpp', 'kd') ~ 'log10', 
